@@ -19,8 +19,10 @@ import (
 )
 
 func parseAuditLogAndSendToOLTP(ctx context.Context, path string, tracer trace.Tracer) error {
-	events, err := parseAuditLog(path)
-	logrus.Infof("Found %d audit log events", len(events))
+
+	eventCh := make(chan auditapi.Event)
+
+	err := parseAuditLog(path, eventCh)
 	if err != nil {
 		return err
 	}
@@ -29,7 +31,7 @@ func parseAuditLogAndSendToOLTP(ctx context.Context, path string, tracer trace.T
 	var auditIDToSpan = map[types.UID]context.Context{}
 
 	logrus.Infof("Sending audit log events to Jaeger")
-	for _, event := range events {
+	for event := range eventCh {
 		currentCtx := ctx
 		if existingCtx, found := auditIDToSpan[event.AuditID]; found {
 			currentCtx = existingCtx
@@ -44,23 +46,27 @@ func parseAuditLogAndSendToOLTP(ctx context.Context, path string, tracer trace.T
 	return errors.Join(errs...)
 }
 
-func parseAuditLog(path string) ([]auditapi.Event, error) {
-	result := []auditapi.Event{}
-
+func parseAuditLog(path string, eventCh chan<- auditapi.Event) error {
 	file, err := os.Open(path)
 	if err != nil {
-		return result, err
+		return err
 	}
 	r := jsonl.NewReader(file)
-	err = r.ReadLines(func(data []byte) error {
-		var event auditapi.Event
-		if err := json.Unmarshal(data, &event); err != nil {
-			return err
+	go func() {
+		err := r.ReadLines(func(data []byte) error {
+			var event auditapi.Event
+			if err := json.Unmarshal(data, &event); err != nil {
+				return err
+			}
+			eventCh <- event
+			return nil
+		})
+		if err != nil {
+			logrus.Fatal(err)
 		}
-		result = append(result, event)
-		return nil
-	})
-	return result, err
+		close(eventCh)
+	}()
+	return nil
 }
 
 func sendEvent(ctx context.Context, tracer trace.Tracer, event auditapi.Event) (context.Context, error) {
