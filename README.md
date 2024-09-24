@@ -17,3 +17,6 @@ go run -mod vendor . --otlp-addr=localhost:4317 --audit-log-path=./data/ip-10-0-
 
 Open http://localhost:3000 in browser (default login is `admin`/`admin`) and use Explore view to 
 lookup audit log
+
+![overview](./image.png)
+![span view](./image_2.png)
