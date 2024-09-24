@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"log"
-	"strings"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"k8s.io/klog/v2"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
@@ -15,26 +16,24 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 )
 
-func setupOTLP(ctx context.Context, addr string, headers string) (func(context.Context) error, error) {
-	log.Fatal("Setting up OTLP Exporter", "addr", addr)
-	var err error
-
-	headersMap := make(map[string]string)
-	if headers != "" {
-		ha := strings.Split(headers, ",")
-		for _, h := range ha {
-			parts := strings.Split(h, "=")
-			if len(parts) != 2 {
-				log.Fatal(errors.New("Error parsing OTLP header"), "header parts length is not 2", "header", h)
-				continue
-			}
-			headersMap[parts[0]] = parts[1]
-		}
+func initConn(otlpAddr string) (*grpc.ClientConn, error) {
+	klog.Infof("Connecting to %s", otlpAddr)
+	conn, err := grpc.NewClient(otlpAddr,
+		// Note the use of insecure transport here. TLS is recommended in production.
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create gRPC connection to collector: %w", err)
 	}
 
+	return conn, err
+}
+
+func setupOTLP(ctx context.Context, conn *grpc.ClientConn) (func(context.Context) error, error) {
+	var err error
+
 	opts := []otlptracegrpc.Option{}
-	opts = append(opts, otlptracegrpc.WithEndpoint(addr))
-	opts = append(opts, otlptracegrpc.WithHeaders(headersMap))
+	opts = append(opts, otlptracegrpc.WithGRPCConn(conn))
 	exporter, err := otlptracegrpc.New(ctx, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create trace exporter: %w", err)
@@ -45,7 +44,11 @@ func setupOTLP(ctx context.Context, addr string, headers string) (func(context.C
 			semconv.ServiceNameKey.String("apiserver"),
 		),
 	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create resource: %w", err)
+	}
 	tracerProvider := tracesdk.NewTracerProvider(
+		// tracesdk.WithIDGenerator(x),
 		tracesdk.WithResource(res),
 		tracesdk.WithSampler(tracesdk.AlwaysSample()),
 		tracesdk.WithSpanProcessor(bsp),
