@@ -5,6 +5,8 @@ import (
 	"flag"
 	"log"
 	"os"
+
+	"go.opentelemetry.io/otel"
 )
 
 func main() {
@@ -22,14 +24,20 @@ func main() {
 	flag.Parse()
 
 	ctx := context.Background()
-	spanExporter, err := setupOTLP(ctx, otlpAddr, otlpHeaders)
+	shutdownTracerProvider, err := setupOTLP(ctx, otlpAddr, otlpHeaders)
 	if err != nil {
-		log.Fatal(err, "unable to set up tracing")
-		os.Exit(1)
+		log.Fatal(err)
 	}
-	defer spanExporter.Shutdown(ctx)
+	defer func() {
+		if err := shutdownTracerProvider(ctx); err != nil {
+			log.Fatalf("failed to shutdown TracerProvider: %s", err)
+		}
+	}()
 
-	if err := parseAuditLogAndSendToOLTP(auditLogPath, spanExporter); err != nil {
+	name := "github.com/vrutkovs/audit-span"
+	tracer := otel.Tracer(name)
+
+	if err := parseAuditLogAndSendToOLTP(ctx, auditLogPath, tracer); err != nil {
 		log.Fatal(err)
 		os.Exit(1)
 	}
