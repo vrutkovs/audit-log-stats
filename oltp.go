@@ -7,17 +7,13 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/otlp"
-	"go.opentelemetry.io/otel/exporters/otlp/otlpgrpc"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/propagation"
-	tracesdk "go.opentelemetry.io/otel/sdk/export/trace"
-	"google.golang.org/grpc/credentials"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 )
 
-func setupOTLP(ctx context.Context, addr string, headers string, secured bool) (tracesdk.SpanExporter, error) {
+func setupOTLP(ctx context.Context, addr string, headers string) (tracesdk.SpanExporter, error) {
 	log.Fatal("Setting up OTLP Exporter", "addr", addr)
-
-	var exp *otlp.Exporter
 	var err error
 
 	headersMap := make(map[string]string)
@@ -33,29 +29,14 @@ func setupOTLP(ctx context.Context, addr string, headers string, secured bool) (
 		}
 	}
 
-	if secured {
-		exp, err = otlp.NewExporter(
-			ctx,
-			otlpgrpc.NewDriver(
-				otlpgrpc.WithEndpoint(addr),
-				otlpgrpc.WithHeaders(headersMap),
-				otlpgrpc.WithTLSCredentials(credentials.NewClientTLSFromCert(nil, "")),
-			),
-		)
-	} else {
-		exp, err = otlp.NewExporter(
-			ctx,
-			otlpgrpc.NewDriver(
-				otlpgrpc.WithEndpoint(addr),
-				otlpgrpc.WithHeaders(headersMap),
-				otlpgrpc.WithInsecure(),
-			),
-		)
-	}
+	opts := []otlptracegrpc.Option{}
+	opts = append(opts, otlptracegrpc.WithEndpoint(addr))
+	opts = append(opts, otlptracegrpc.WithHeaders(headersMap))
+	exporter, err := otlptracegrpc.New(ctx, opts...)
 	if err != nil {
 		return nil, err
 	}
 
 	otel.SetTextMapPropagator(propagation.TraceContext{})
-	return exp, err
+	return exporter, err
 }
