@@ -39,29 +39,29 @@ func NewClientProto(conf ClientConfig) (Client, error) {
 	return &client, nil
 }
 
-func (c *clientProto) JSON(json string) {
-	c.log(json, DEBUG, "")
+func (c *clientProto) JSON(timestamp time.Time, json string) {
+	c.log(timestamp, json, DEBUG, "")
 }
 
 func (c *clientProto) Debugf(format string, args ...interface{}) {
-	c.log(format, DEBUG, "Debug: ", args...)
+	c.log(time.Now(), format, DEBUG, "Debug: ", args...)
 }
 
 func (c *clientProto) Infof(format string, args ...interface{}) {
-	c.log(format, INFO, "Info: ", args...)
+	c.log(time.Now(), format, INFO, "Info: ", args...)
 }
 
 func (c *clientProto) Warnf(format string, args ...interface{}) {
-	c.log(format, WARN, "Warn: ", args...)
+	c.log(time.Now(), format, WARN, "Warn: ", args...)
 }
 
 func (c *clientProto) Errorf(format string, args ...interface{}) {
-	c.log(format, ERROR, "Error: ", args...)
+	c.log(time.Now(), format, ERROR, "Error: ", args...)
 }
 
-func (c *clientProto) log(format string, level LogLevel, prefix string, args ...interface{}) {
+func (c *clientProto) log(stamp time.Time, format string, level LogLevel, prefix string, args ...interface{}) {
 	if (level >= c.config.SendLevel) || (level >= c.config.PrintLevel) {
-		now := time.Now().UnixNano()
+		now := stamp.UnixNano()
 		c.entries <- protoLogEntry{
 			entry: &logproto.Entry{
 				Timestamp: &timestamp.Timestamp{

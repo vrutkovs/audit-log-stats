@@ -114,6 +114,6 @@ func sendEventToLoki(loki promtail.Client, event auditapi.Event) error {
 	if err != nil {
 		return err
 	}
-	loki.JSON(string(eventJson))
+	loki.JSON(event.StageTimestamp.Time, string(eventJson))
 	return nil
 }

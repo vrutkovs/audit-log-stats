@@ -45,7 +45,7 @@ func NewClientJson(conf ClientConfig) (Client, error) {
 	return &client, nil
 }
 
-func (c *clientJson) JSON(json string) {
+func (c *clientJson) JSON(timestamp time.Time, json string) {
 	c.log(json, DEBUG, "")
 }
 
