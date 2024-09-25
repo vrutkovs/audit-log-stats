@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/afiskon/promtail-client/promtail"
-	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
+	"k8s.io/klog/v2"
 )
 
 func main() {
@@ -26,23 +26,23 @@ func main() {
 	ctx := context.Background()
 	tracer, shutdownTracerProvider, err := prepareTracer(ctx, otlpAddr)
 	if err != nil {
-		logrus.Fatal(err)
+		klog.Fatal(err)
 	}
 	defer func() {
 		if err := shutdownTracerProvider(ctx); err != nil {
-			logrus.Warnf("failed to shutdown TracerProvider: %s", err)
+			klog.Errorf("failed to shutdown TracerProvider: %s", err)
 		}
 	}()
 
 	labels := fmt.Sprintf(`{filename="%s"}`, auditLogPath)
 	loki, err := prepareLoki(labels, lokiAddr)
 	if err != nil {
-		logrus.Fatal(err)
+		klog.Fatal(err)
 	}
 	if err = parseAuditLogAndSendToOLTP(ctx, auditLogPath, tracer, loki); err != nil {
-		logrus.Fatal(err)
+		klog.Fatal(err)
 	}
-	logrus.Infof("Done")
+	klog.Infof("Done")
 }
 
 func prepareTracer(ctx context.Context, otlpAddr string) (trace.Tracer, func(context.Context) error, error) {

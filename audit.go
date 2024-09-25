@@ -9,10 +9,10 @@ import (
 
 	"github.com/afiskon/promtail-client/promtail"
 	"github.com/simonfrey/jsonl"
-	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	auditapi "k8s.io/apiserver/pkg/apis/audit/v1"
+	"k8s.io/klog/v2"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -30,7 +30,7 @@ func parseAuditLogAndSendToOLTP(ctx context.Context, path string, tracer trace.T
 	var errs []error
 	var auditIDToSpan = map[types.UID]context.Context{}
 
-	logrus.Infof("Sending audit log events to Jaeger")
+	klog.Infof("Sending audit log events to Jaeger")
 	for event := range eventCh {
 		currentCtx := ctx
 		if existingCtx, found := auditIDToSpan[event.AuditID]; found {
@@ -69,7 +69,7 @@ func parseAuditLog(path string, eventCh chan<- auditapi.Event) error {
 			return nil
 		})
 		if err != nil {
-			logrus.Fatal(err)
+			klog.Fatal(err)
 		}
 		close(eventCh)
 	}()
