@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/afiskon/promtail-client/promtail"
 	"github.com/simonfrey/jsonl"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,8 +19,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func parseAuditLogAndSendToOLTP(ctx context.Context, path string, tracer trace.Tracer) error {
-
+func parseAuditLogAndSendToOLTP(ctx context.Context, path string, tracer trace.Tracer, loki promtail.Client) error {
 	eventCh := make(chan auditapi.Event)
 
 	err := parseAuditLog(path, eventCh)
@@ -37,7 +37,14 @@ func parseAuditLogAndSendToOLTP(ctx context.Context, path string, tracer trace.T
 			currentCtx = existingCtx
 		}
 
-		spanCtx, err := sendEvent(currentCtx, tracer, event)
+		// Send to loki
+		err := sendEventToLoki(loki, event)
+		if err != nil {
+			errs = append(errs, err)
+		}
+
+		// Convert to span, send to Tempo
+		spanCtx, err := sendEventToTempo(currentCtx, tracer, event)
 		if err != nil {
 			errs = append(errs, err)
 		}
@@ -69,7 +76,7 @@ func parseAuditLog(path string, eventCh chan<- auditapi.Event) error {
 	return nil
 }
 
-func sendEvent(ctx context.Context, tracer trace.Tracer, event auditapi.Event) (context.Context, error) {
+func sendEventToTempo(ctx context.Context, tracer trace.Tracer, event auditapi.Event) (context.Context, error) {
 	if event.ObjectRef == nil || event.ResponseStatus == nil {
 		return ctx, nil
 	}
@@ -100,4 +107,17 @@ func sendEvent(ctx context.Context, tracer trace.Tracer, event auditapi.Event) (
 	span.SetStatus(statusCode, message)
 	span.End(trace.WithTimestamp(event.StageTimestamp.Time))
 	return spanCtx, nil
+}
+
+func sendEventToLoki(loki promtail.Client, event auditapi.Event) error {
+	eventJson, err := json.Marshal(event)
+	if err != nil {
+		return err
+	}
+	lokiFunc := loki.Infof
+	if event.ResponseStatus.Status == metav1.StatusFailure {
+		lokiFunc = loki.Errorf
+	}
+	lokiFunc(string(eventJson))
+	return nil
 }
