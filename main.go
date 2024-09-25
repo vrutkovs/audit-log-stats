@@ -65,8 +65,8 @@ func prepareLoki(labels, lokiAddr string) (promtail.Client, error) {
 		Labels:             labels,
 		BatchWait:          5 * time.Second,
 		BatchEntriesNumber: 10000,
-		SendLevel:          promtail.INFO,
-		PrintLevel:         promtail.ERROR,
+		SendLevel:          promtail.DEBUG,
+		PrintLevel:         promtail.DISABLE,
 	}
 	return promtail.NewClientProto(conf)
 }
