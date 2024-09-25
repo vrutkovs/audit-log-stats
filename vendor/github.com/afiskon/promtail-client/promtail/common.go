@@ -34,6 +34,7 @@ type ClientConfig struct {
 }
 
 type Client interface {
+	JSON(format string)
 	Debugf(format string, args ...interface{})
 	Infof(format string, args ...interface{})
 	Warnf(format string, args ...interface{})

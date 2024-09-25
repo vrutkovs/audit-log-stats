@@ -11,7 +11,7 @@ import (
 type jsonLogEntry struct {
 	Ts    time.Time `json:"ts"`
 	Line  string    `json:"line"`
-	level LogLevel // not used in JSON
+	level LogLevel  // not used in JSON
 }
 
 type promtailStream struct {
@@ -43,6 +43,10 @@ func NewClientJson(conf ClientConfig) (Client, error) {
 	go client.run()
 
 	return &client, nil
+}
+
+func (c *clientJson) JSON(json string) {
+	c.log(json, DEBUG, "")
 }
 
 func (c *clientJson) Debugf(format string, args ...interface{}) {

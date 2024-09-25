@@ -2,13 +2,14 @@ package promtail
 
 import (
 	"fmt"
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes/timestamp"
-	"github.com/golang/snappy"
-	"github.com/afiskon/promtail-client/logproto"
 	"log"
 	"sync"
 	"time"
+
+	"github.com/afiskon/promtail-client/logproto"
+	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes/timestamp"
+	"github.com/golang/snappy"
 )
 
 type protoLogEntry struct {
@@ -36,6 +37,10 @@ func NewClientProto(conf ClientConfig) (Client, error) {
 	go client.run()
 
 	return &client, nil
+}
+
+func (c *clientProto) JSON(json string) {
+	c.log(json, DEBUG, "")
 }
 
 func (c *clientProto) Debugf(format string, args ...interface{}) {

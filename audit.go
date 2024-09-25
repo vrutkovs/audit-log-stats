@@ -114,10 +114,6 @@ func sendEventToLoki(loki promtail.Client, event auditapi.Event) error {
 	if err != nil {
 		return err
 	}
-	lokiFunc := loki.Infof
-	if event.ResponseStatus.Status == metav1.StatusFailure {
-		lokiFunc = loki.Errorf
-	}
-	lokiFunc(string(eventJson))
+	loki.JSON(string(eventJson))
 	return nil
 }
