@@ -30,7 +30,7 @@ func parseAuditLogAndSendToOLTP(ctx context.Context, path string, tracer trace.T
 	var errs []error
 	var auditIDToSpan = map[types.UID]context.Context{}
 
-	klog.Infof("Sending audit log events to Jaeger")
+	klog.Infof("Sending audit log events from %s to Jaeger / Loki", path)
 	for event := range eventCh {
 		currentCtx := ctx
 		if existingCtx, found := auditIDToSpan[event.AuditID]; found {
@@ -38,7 +38,7 @@ func parseAuditLogAndSendToOLTP(ctx context.Context, path string, tracer trace.T
 		}
 
 		// Send to loki
-		err := sendEventToLoki(loki, event, path)
+		err := sendEventToLoki(loki, event)
 		if err != nil {
 			errs = append(errs, err)
 		}
@@ -110,7 +110,7 @@ func sendEventToTempo(ctx context.Context, tracer trace.Tracer, event auditapi.E
 	return spanCtx, nil
 }
 
-func sendEventToLoki(loki promtail.Client, event auditapi.Event, path string) error {
+func sendEventToLoki(loki promtail.Client, event auditapi.Event) error {
 	eventJson, err := json.Marshal(event)
 	if err != nil {
 		return err
