@@ -38,13 +38,13 @@ func parseAuditLogAndSendToOLTP(ctx context.Context, path string, tracer trace.T
 		}
 
 		// Send to loki
-		err := sendEventToLoki(loki, event)
+		err := sendEventToLoki(loki, event, path)
 		if err != nil {
 			errs = append(errs, err)
 		}
 
 		// Convert to span, send to Tempo
-		spanCtx, err := sendEventToTempo(currentCtx, tracer, event)
+		spanCtx, err := sendEventToTempo(currentCtx, tracer, event, path)
 		if err != nil {
 			errs = append(errs, err)
 		}
@@ -76,7 +76,7 @@ func parseAuditLog(path string, eventCh chan<- auditapi.Event) error {
 	return nil
 }
 
-func sendEventToTempo(ctx context.Context, tracer trace.Tracer, event auditapi.Event) (context.Context, error) {
+func sendEventToTempo(ctx context.Context, tracer trace.Tracer, event auditapi.Event, path string) (context.Context, error) {
 	if event.ObjectRef == nil || event.ResponseStatus == nil {
 		return ctx, nil
 	}
@@ -93,6 +93,7 @@ func sendEventToTempo(ctx context.Context, tracer trace.Tracer, event auditapi.E
 		attribute.String("k8s.user.name", event.User.Username),
 		attribute.Int64("http.code", int64(event.ResponseStatus.Code)),
 		attribute.String("http.user-agent", event.UserAgent),
+		attribute.String("filename", path),
 	}
 	statusCode := codes.Ok
 	message := ""
@@ -109,7 +110,7 @@ func sendEventToTempo(ctx context.Context, tracer trace.Tracer, event auditapi.E
 	return spanCtx, nil
 }
 
-func sendEventToLoki(loki promtail.Client, event auditapi.Event) error {
+func sendEventToLoki(loki promtail.Client, event auditapi.Event, path string) error {
 	eventJson, err := json.Marshal(event)
 	if err != nil {
 		return err

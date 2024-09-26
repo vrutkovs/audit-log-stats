@@ -1,8 +1,13 @@
 package main
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
+	"io/fs"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -328,10 +333,7 @@ func getTimeStampFromProwJSON(rawURL string) (time.Time, error) {
 }
 
 func fetchAuditLogsFromProwJob(prowJobURL *url.URL) (string, error) {
-	auditLogArchiveSplit := strings.Split(prowJobURL.Path, "/")
-	auditLogArchiveFilename := auditLogArchiveSplit[len(auditLogArchiveSplit)-1]
-
-	tmpDir, err := os.CreateTemp("audit-span", "")
+	tmpDir, err := os.MkdirTemp("", "audit-span")
 	if err != nil {
 		return "", err
 	}
@@ -340,18 +342,165 @@ func fetchAuditLogsFromProwJob(prowJobURL *url.URL) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	klog.Infof("Downloading %s to %s", prowjobInfo.AuditLogsTarURL, tmpDir.Name())
+
+	auditLogArchiveSplit := strings.Split(prowjobInfo.AuditLogsTarURL, "/")
+	auditLogArchiveFilename := auditLogArchiveSplit[len(auditLogArchiveSplit)-1]
+
+	auditLogPath := filepath.Join(tmpDir, auditLogArchiveFilename)
+	klog.Infof("Downloading %s to %s", prowjobInfo.AuditLogsTarURL, auditLogPath)
 
 	g := got.New()
-	if err = g.Download(prowjobInfo.AuditLogsTarURL, tmpDir.Name()); err != nil {
+	if err = g.Download(prowjobInfo.AuditLogsTarURL, auditLogPath); err != nil {
 		return "", err
 	}
+	// Unpack audit tar.gzs from audit-tar
+	extractedArchives, err := untarIt(tmpDir, auditLogPath)
+	if err != nil {
+		return tmpDir, err
+	}
+	if err := os.Remove(auditLogPath); err != nil {
+		return tmpDir, err
+	}
 
-	auditLogPath := filepath.Join(tmpDir.Name(), auditLogArchiveFilename)
-	// Untar audit log there
-	return auditLogPath, nil
+	// Ungz each file there too
+	errs := []error{}
+	extractedLogFiles := []string{}
+	for _, auditTarGz := range extractedArchives {
+		extractedFile, err := unGzIt(auditTarGz)
+		if err != nil {
+			errs = append(errs, err)
+		}
+		extractedLogFiles = append(extractedLogFiles, extractedFile)
+		if err := os.Remove(auditTarGz); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	err = errors.Join(errs...)
+	if err != nil {
+		return tmpDir, err
+	}
+
+	// List files in tmp dir and extact them all with no filter
+	klog.Infof("Created %d files in %s", len(extractedLogFiles), tmpDir)
+	return tmpDir, nil
 }
 
 func findAuditLogsInDir(auditLogDir string) ([]string, error) {
-	return []string{}, nil
+	foundFiles := []string{}
+	err := filepath.WalkDir(auditLogDir, func(path string, di fs.DirEntry, err error) error {
+		if !strings.Contains(path, ".log") {
+			return nil
+		}
+		foundFiles = append(foundFiles, path)
+		return nil
+	})
+	klog.Infof("Found %d log files in %s", len(foundFiles), auditLogDir)
+	return foundFiles, err
+}
+
+func unGzIt(mpath string) (string, error) {
+	klog.Infof("Ungzipping %s", mpath)
+	fr, err := read(mpath)
+	if err != nil {
+		return "", err
+	}
+	defer fr.Close()
+	gr, err := gzip.NewReader(fr)
+	if err != nil {
+		return "", err
+	}
+
+	cwd := filepath.Dir(mpath)
+	newFileName := strings.ReplaceAll(filepath.Base(mpath), ".gz", "")
+	localPath := filepath.Join(cwd, newFileName)
+	ow, err := overwrite(localPath)
+	if err != nil {
+		return localPath, err
+	}
+	defer ow.Close()
+	if _, err := io.Copy(ow, gr); err != nil {
+		return localPath, err
+	}
+	return localPath, nil
+}
+
+func untarIt(tmpDir string, mpath string) ([]string, error) {
+	result := []string{}
+
+	klog.Infof("Untarring %s", mpath)
+	fr, err := read(mpath)
+	if err != nil {
+		return result, err
+	}
+	defer fr.Close()
+	gr, err := gzip.NewReader(fr)
+	if err != nil {
+		return result, err
+	}
+	defer gr.Close()
+	tr := tar.NewReader(gr)
+
+	errs := []error{}
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			// end of tar archive
+			break
+		}
+		if err != nil {
+			return result, err
+		}
+		path := hdr.Name
+		if !strings.Contains(path, "-audit") {
+			continue
+		}
+
+		splitPath := strings.Split(path, "/")
+		if len(splitPath) < 2 {
+			continue
+		}
+		subDirName := splitPath[len(splitPath)-2]
+		subDirPath := filepath.Join(tmpDir, subDirName)
+		_, err = os.Stat(subDirPath)
+		if os.IsNotExist(err) {
+			if err := os.Mkdir(subDirPath, 0755); err != nil {
+				errs = append(errs, err)
+				continue
+			}
+		}
+
+		localPath := filepath.Join(subDirPath, filepath.Base(path))
+		klog.Infof("Extracting %s to %s", path, localPath)
+		ow, err := overwrite(localPath)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		defer ow.Close()
+		if _, err := io.Copy(ow, tr); err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		result = append(result, localPath)
+	}
+	return result, errors.Join(errs...)
+}
+
+func read(mpath string) (*os.File, error) {
+	f, err := os.OpenFile(mpath, os.O_RDONLY, 0444)
+	if err != nil {
+		return f, err
+	}
+	return f, nil
+}
+
+func overwrite(mpath string) (*os.File, error) {
+	f, err := os.OpenFile(mpath, os.O_RDWR|os.O_TRUNC, 0777)
+	if err != nil {
+		f, err = os.Create(mpath)
+		if err != nil {
+			return f, err
+		}
+	}
+	return f, nil
 }

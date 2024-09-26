@@ -42,12 +42,6 @@ func main() {
 		}
 	}()
 
-	labels := fmt.Sprintf(`{prowjob="%s"}`, prowjob)
-	loki, err := prepareLoki(labels, lokiAddr)
-	if err != nil {
-		klog.Fatal(err)
-	}
-
 	if len(auditLogDir) == 0 {
 		var err error
 		auditLogDir, err = fetchAuditLogsFromProwJob(prowjobUrl)
@@ -61,6 +55,11 @@ func main() {
 		klog.Fatal(err)
 	}
 	for _, auditLogPath := range auditLogFiles {
+		labels := fmt.Sprintf(`{prowjob="%s", filename="%s"}`, prowjob, auditLogPath)
+		loki, err := prepareLoki(labels, lokiAddr)
+		if err != nil {
+			klog.Fatal(err)
+		}
 		if err = parseAuditLogAndSendToOLTP(ctx, auditLogPath, tracer, loki); err != nil {
 			klog.Warning(err)
 		}
