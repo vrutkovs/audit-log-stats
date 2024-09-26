@@ -41,6 +41,9 @@ github.com/grpc-ecosystem/grpc-gateway/v2/utilities
 # github.com/json-iterator/go v1.1.12
 ## explicit; go 1.12
 github.com/json-iterator/go
+# github.com/melbahja/got v0.7.0
+## explicit; go 1.18
+github.com/melbahja/got
 # github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
 ## explicit
 github.com/modern-go/concurrent
@@ -103,6 +106,8 @@ go.opentelemetry.io/proto/otlp/resource/v1
 go.opentelemetry.io/proto/otlp/trace/v1
 # golang.org/x/net v0.29.0
 ## explicit; go 1.18
+golang.org/x/net/html
+golang.org/x/net/html/atom
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack

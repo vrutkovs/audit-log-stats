@@ -1,0 +1,4 @@
+dist/
+coverage.out
+*.dat
+*.output

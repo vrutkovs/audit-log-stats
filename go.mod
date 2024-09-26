@@ -4,11 +4,13 @@ go 1.22.7
 
 require (
 	github.com/afiskon/promtail-client v0.0.0-20190305142237-506f3f921e9c
+	github.com/melbahja/got v0.7.0
 	github.com/simonfrey/jsonl v0.0.0-20240904112901-935399b9a740
 	go.opentelemetry.io/otel v1.30.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.30.0
 	go.opentelemetry.io/otel/sdk v1.30.0
 	go.opentelemetry.io/otel/trace v1.30.0
+	golang.org/x/net v0.29.0
 	google.golang.org/grpc v1.66.1
 	k8s.io/apimachinery v0.31.1
 	k8s.io/apiserver v0.31.1
@@ -33,7 +35,6 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.30.0 // indirect
 	go.opentelemetry.io/otel/metric v1.30.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
-	golang.org/x/net v0.29.0 // indirect
 	golang.org/x/sys v0.25.0 // indirect
 	golang.org/x/text v0.18.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240903143218-8af14fe29dc1 // indirect
