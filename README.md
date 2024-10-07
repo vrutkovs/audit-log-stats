@@ -28,3 +28,25 @@ Apart from Prow URL the app can work on already extracted audit log dir:
 ```
 go run -mod vendor . --otlp-addr=localhost:4317 --audit-log-dir=/tmp/audit-span696690513
 ```
+
+### Useful queries
+
+List all failed requests
+```
+{filename=~".+"} | json | stage = "ResponseComplete" | responseStatus_code = "500"
+```
+
+Most popular user agents and endpoints throwing errors:
+```
+sum by (verb, userAgent, requestURI) (rate({filename=~".+"} | json  | __error__="" | stage ="ResponseComplete" | responseStatus_code = 500[1m]))
+```
+
+Show responses that took over a second for etcd to process:
+```
+count (rate({filename=~".+"} | json | stage = "ResponseComplete" | annotations_apiserver_latency_k8s_io_etcd != "" | annotations_apiserver_latency_k8s_io_etcd > 1s | unwrap duration(annotations_apiserver_latency_k8s_io_etcd)[1s]))
+```
+
+Time taken by etcd to process user requests by username:
+```
+count by (user_username) (rate({filename=~".+"} | json | stage = "ResponseComplete" | annotations_apiserver_latency_k8s_io_etcd != "" | unwrap duration(annotations_apiserver_latency_k8s_io_etcd)[1s]))
+```
