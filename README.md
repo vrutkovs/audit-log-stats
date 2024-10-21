@@ -48,5 +48,20 @@ count (rate({filename=~".+"} | json | stage = "ResponseComplete" | annotations_a
 
 Time taken by etcd to process user requests by username:
 ```
-count by (user_username) (rate({filename=~".+"} | json | stage = "ResponseComplete" | annotations_apiserver_latency_k8s_io_etcd != "" | unwrap duration(annotations_apiserver_latency_k8s_io_etcd)[1s]))
+count by (userAgent, user_username) (rate({filename=~".+"} | json | stage = "ResponseComplete" | annotations_apiserver_latency_k8s_io_etcd != "" | unwrap duration(annotations_apiserver_latency_k8s_io_etcd)[1s]))
+```
+
+Failing requests by URI and user:
+```
+count by (requestURI, userAgent, user_username) (rate({filename=~".+"} | json | stage = "ResponseComplete" | objectRef_apiGroup !~ "(authentication|coordination|authorization).k8s.io" | responseStatus_status="Failure"[1s]))
+```
+
+Usernames issuing most mutating requests:
+```
+sum by (user_username) (rate({filename=~".+"} | json | verb =~ "(update|delete|create|patch)" | stage = "ResponseComplete" | responseStatus_code=~"2.+"[1m]))
+```
+
+Most actively mutated resource types:
+```
+topk(20, sum by (objectRef_resource, objectRef_namespace, objectRef_name) (rate({filename=~".+"} | json | verb =~ "(update|delete|create|patch)" | stage = "ResponseComplete" | responseStatus_code=~"2.+"[1m])))
 ```
