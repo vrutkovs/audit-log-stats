@@ -24,7 +24,7 @@ schema_config:
     - from: 2020-10-24
       store: boltdb-shipper
       object_store: filesystem
-      schema: v11
+      schema: v13
       index:
         prefix: index_
         period: 24h
@@ -41,7 +41,7 @@ ingester:
   max_chunk_age: 43800h
 
 limits_config:
-  enforce_metric_name: false
+  allow_structured_metadata: false
   reject_old_samples: false
   reject_old_samples_max_age: 43800h
   ingestion_rate_mb: 1024
