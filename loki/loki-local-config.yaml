@@ -40,6 +40,11 @@ ruler:
 ingester:
   max_chunk_age: 43800h
 
+querier:
+  # engine:
+    # timeout: 5m
+
+
 limits_config:
   allow_structured_metadata: false
   reject_old_samples: false
@@ -51,6 +56,7 @@ limits_config:
   max_query_length: 43800h
   per_stream_rate_limit: 35GB
   per_stream_rate_limit_burst: 90GB
+  query_timeout: 5m
 # By default, Loki will send anonymous, but uniquely-identifiable usage and configuration
 # analytics to Grafana Labs. These statistics are sent to https://stats.grafana.org/
 #
