@@ -16,7 +16,7 @@ func main() {
 		prowjob     string
 		auditLogDir string
 	)
-	flag.StringVar(&lokiAddr, "loki-addr", "http://localhost:3100/api/prom/push", "URL to push logs to")
+	flag.StringVar(&lokiAddr, "loki-addr", "http://localhost:9428/insert/loki/api/v1/push", "URL to push logs to")
 	flag.StringVar(&prowjob, "prow-job", "", "prowjob URL")
 	flag.StringVar(&auditLogDir, "audit-log-dir", "", "path to dir with audit logs")
 	flag.Parse()
