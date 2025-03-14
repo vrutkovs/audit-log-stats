@@ -10,7 +10,6 @@ import (
 	"github.com/afiskon/promtail-client/promtail"
 	"github.com/simonfrey/jsonl"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	auditapi "k8s.io/apiserver/pkg/apis/audit/v1"
 	"k8s.io/klog/v2"
 
@@ -28,14 +27,14 @@ func parseAuditLogAndSendToOLTP(ctx context.Context, path string, tracer trace.T
 	}
 
 	var errs []error
-	var auditIDToSpan = map[types.UID]context.Context{}
+	// var auditIDToSpan = map[types.UID]context.Context{}
 
 	klog.Infof("Sending audit log events from %s to Jaeger / Loki", path)
 	for event := range eventCh {
-		currentCtx := ctx
-		if existingCtx, found := auditIDToSpan[event.AuditID]; found {
-			currentCtx = existingCtx
-		}
+		// currentCtx := ctx
+		// if existingCtx, found := auditIDToSpan[event.AuditID]; found {
+		// 	currentCtx = existingCtx
+		// }
 
 		// Send to loki
 		err := sendEventToLoki(loki, event)
@@ -43,12 +42,12 @@ func parseAuditLogAndSendToOLTP(ctx context.Context, path string, tracer trace.T
 			errs = append(errs, err)
 		}
 
-		// Convert to span, send to Tempo
-		spanCtx, err := sendEventToTempo(currentCtx, tracer, event, path)
-		if err != nil {
-			errs = append(errs, err)
-		}
-		auditIDToSpan[event.AuditID] = spanCtx
+		// // Convert to span, send to Tempo
+		// spanCtx, err := sendEventToTempo(currentCtx, tracer, event, path)
+		// if err != nil {
+		// 	errs = append(errs, err)
+		// }
+		// auditIDToSpan[event.AuditID] = spanCtx
 	}
 	return errors.Join(errs...)
 }
