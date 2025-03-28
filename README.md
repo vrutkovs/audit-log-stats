@@ -1,67 +1,23 @@
-# Audit Log to Traces
+# Audit Log metrics
 
-This app parses audit log, converts them into traces and sends it to Jaeger-compatible storage. 
-Grafana is used as a tool to query and find strange traces.
-
-Along with Tempo the tool also sends data to Loki, so that audit data could be converted into metrics 
-or properly grepped.
+This app parses audit log and sends them to VictoriaMetrics. Grafana dashboard is rendering stats derived from
+those to find noisy apps or requests taking too much time.
 
 ## Howto
 
 Start grafana stack:
 ```
-podman play k8s grafana-stack.yaml
+podman play kube grafana-stack.yaml
 ```
 
-Start the app and pass it the URL of the auditlogs:
+Fetch audit logs archive, extract them and start the app:
 ```
-go run -mod vendor . --otlp-addr=localhost:4317 --prow-job=https://prow.ci.openshift.org/view/gs/test-platform-results/logs/periodic-ci-openshift-release-master-ci-4.17-e2e-azure-ovn-upgrade/1835770305428066304
-```
-
-Open http://localhost:3000 in browser (default login is `admin`/`admin`) and use Explore view to 
-lookup audit log
-
-![overview](./image.png)
-![span view](./image_2.png)
-
-Apart from Prow URL the app can work on already extracted audit log dir:
-```
-go run -mod vendor . --otlp-addr=localhost:4317 --audit-log-dir=/tmp/audit-span696690513
+go run -mod vendor . --audit-log-dir=/tmp/audit-files
 ```
 
-### Useful queries
+Open http://localhost:3000 in browser (default login is `admin`/`admin`) and open "Audit Log" dashboard
 
-List all failed requests
+Apart from extracted audit logs the app can fetch audit logs from Openshift CI:
 ```
-{filename=~".+"} | json | stage = "ResponseComplete" | responseStatus_code = "500"
-```
-
-Most popular user agents and endpoints throwing errors:
-```
-sum by (verb, userAgent, requestURI) (rate({filename=~".+"} | json  | __error__="" | stage ="ResponseComplete" | responseStatus_code = 500[1m]))
-```
-
-Show responses that took over a second for etcd to process:
-```
-count (rate({filename=~".+"} | json | stage = "ResponseComplete" | annotations_apiserver_latency_k8s_io_etcd != "" | annotations_apiserver_latency_k8s_io_etcd > 1s | unwrap duration(annotations_apiserver_latency_k8s_io_etcd)[1s]))
-```
-
-Time taken by etcd to process user requests by username:
-```
-count by (userAgent, user_username) (rate({filename=~".+"} | json | stage = "ResponseComplete" | annotations_apiserver_latency_k8s_io_etcd != "" | unwrap duration(annotations_apiserver_latency_k8s_io_etcd)[1s]))
-```
-
-Failing requests by URI and user:
-```
-count by (requestURI, userAgent, user_username) (rate({filename=~".+"} | json | stage = "ResponseComplete" | objectRef_apiGroup !~ "(authentication|coordination|authorization).k8s.io" | responseStatus_status="Failure"[1s]))
-```
-
-Usernames issuing most mutating requests:
-```
-sum by (user_username) (rate({filename=~".+"} | json | verb =~ "(update|delete|create|patch)" | stage = "ResponseComplete" | responseStatus_code=~"2.+"[1m]))
-```
-
-Most actively mutated resource types:
-```
-topk(20, sum by (objectRef_resource, objectRef_namespace, objectRef_name) (rate({filename=~".+"} | json | verb =~ "(update|delete|create|patch)" | stage = "ResponseComplete" | responseStatus_code=~"2.+"[1m])))
+go run -mod vendor . --prow-job=https://prow.ci.openshift.org/view/gs/test-platform-results/logs/periodic-ci-openshift-release-master-ci-4.17-e2e-azure-ovn-upgrade/1835770305428066304
 ```
