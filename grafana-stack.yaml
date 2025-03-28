@@ -34,6 +34,8 @@ spec:
             runAsUser: 0
         - name: vlogs
           image: docker.io/victoriametrics/victoria-logs:v1.17.0-victorialogs
+          args:
+            - --retentionPeriod=1y
           ports:
             - containerPort: 9428
               hostPort: 9428
