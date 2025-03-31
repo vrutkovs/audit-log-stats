@@ -15,10 +15,12 @@ func main() {
 		lokiAddr    string
 		prowjob     string
 		auditLogDir string
+		debug       bool
 	)
 	flag.StringVar(&lokiAddr, "loki-addr", "http://localhost:9428/insert/loki/api/v1/push", "URL to push logs to")
 	flag.StringVar(&prowjob, "prow-job", "", "prowjob URL")
 	flag.StringVar(&auditLogDir, "audit-log-dir", "", "path to dir with audit logs")
+	flag.BoolVar(&debug, "debug", false, "set to true to print sent logs")
 	flag.Parse()
 
 	prowjobUrl, err := url.Parse(prowjob)
@@ -40,7 +42,7 @@ func main() {
 	}
 	for _, auditLogPath := range auditLogFiles {
 		labels := fmt.Sprintf(`{prowjob="%s", filename="%s"}`, prowjob, auditLogPath)
-		loki, err := prepareLoki(labels, lokiAddr)
+		loki, err := prepareLoki(labels, lokiAddr, debug)
 		if err != nil {
 			klog.Fatal(err)
 		}
@@ -51,14 +53,18 @@ func main() {
 	klog.Infof("Done")
 }
 
-func prepareLoki(labels, lokiAddr string) (promtail.Client, error) {
+func prepareLoki(labels, lokiAddr string, debug bool) (promtail.Client, error) {
+	printLevel := promtail.DISABLE
+	if debug {
+		printLevel = promtail.DEBUG
+	}
 	conf := promtail.ClientConfig{
 		PushURL:            lokiAddr,
 		Labels:             labels,
-		BatchWait:          5 * time.Second,
+		BatchWait:          time.Second,
 		BatchEntriesNumber: 10000,
 		SendLevel:          promtail.DEBUG,
-		PrintLevel:         promtail.DISABLE,
+		PrintLevel:         printLevel,
 	}
 	return promtail.NewClientProto(conf)
 }
