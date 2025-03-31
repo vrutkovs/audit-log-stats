@@ -10,6 +10,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/golang/snappy"
+
+	klog "k8s.io/klog/v2"
 )
 
 type protoLogEntry struct {
@@ -144,12 +146,12 @@ func (c *clientProto) send(entries []*logproto.Entry) {
 
 	resp, body, err := c.client.sendJsonReq("POST", c.config.PushURL, "application/x-protobuf", buf)
 	if err != nil {
-		log.Printf("promtail.ClientProto: unable to send an HTTP request: %s\n", err)
+		klog.Fatalf("promtail.ClientProto: unable to send an HTTP request: %s\n", err)
 		return
 	}
 
 	if resp.StatusCode != 204 {
-		log.Printf("promtail.ClientProto: Unexpected HTTP status code: %d, message: %s\n", resp.StatusCode, body)
+		klog.Fatalf("promtail.ClientProto: Unexpected HTTP status code: %d, message: %s\n", resp.StatusCode, body)
 		return
 	}
 }
