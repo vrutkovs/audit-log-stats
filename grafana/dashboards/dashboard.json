@@ -1956,7 +1956,7 @@
         "name": "ds",
         "options": [],
         "query": "victoriametrics-logs-datasource",
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "type": "datasource"
       },
@@ -1965,6 +1965,10 @@
         "current": {
           "text": "All",
           "value": "$__all"
+        },
+        "datasource": {
+          "type": "victoriametrics-logs-datasource",
+          "uid": "${ds}"
         },
         "definition": "",
         "includeAll": true,
@@ -1978,7 +1982,7 @@
           "refId": "VictoriaLogsVariableQueryEditor-VariableQuery",
           "type": "fieldValue"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "sort": 5,
         "type": "query"
@@ -1989,6 +1993,10 @@
         "current": {
           "text": "All",
           "value": "$__all"
+        },
+        "datasource": {
+          "type": "victoriametrics-logs-datasource",
+          "uid": "${ds}"
         },
         "definition": "",
         "includeAll": true,
@@ -2002,7 +2010,7 @@
           "refId": "VictoriaLogsVariableQueryEditor-VariableQuery",
           "type": "fieldValue"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "type": "query"
       },
@@ -2013,8 +2021,10 @@
           "text": "All",
           "value": "$__all"
         },
-        "definition": "",
-        "includeAll": true,
+        "datasource": {
+          "type": "victoriametrics-logs-datasource",
+          "uid": "${ds}"
+        },
         "label": "Resource",
         "name": "objRefResource",
         "options": [],
@@ -2025,7 +2035,7 @@
           "refId": "VictoriaLogsVariableQueryEditor-VariableQuery",
           "type": "fieldValue"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "type": "query"
       },
