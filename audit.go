@@ -1,8 +1,11 @@
 package main
 
 import (
+	"compress/gzip"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"os"
 
 	"github.com/afiskon/promtail-client/promtail"
@@ -12,46 +15,61 @@ import (
 )
 
 func parseAuditLogAndSendToOLTP(path string, loki promtail.Client) error {
+	var errs []error
+	counter := 0
 	eventCh := make(chan auditapi.Event)
 
-	err := parseAuditLog(path, eventCh)
-	if err != nil {
-		return err
-	}
+	go func() {
+		err := parseAuditLog(path, eventCh)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("Failed to parse %s: %v", path, err))
+		}
+	}()
 
-	var errs []error
-
-	klog.Infof("Sending audit log events from %s to Loki", path)
 	for event := range eventCh {
 		// Send to loki
 		err := sendEventToLoki(loki, event)
 		if err != nil {
 			errs = append(errs, err)
+		} else {
+			counter++
 		}
 	}
+	klog.Infof("Sent %d audit log events from %s to Loki", counter, path)
 	return errors.Join(errs...)
 }
 
 func parseAuditLog(path string, eventCh chan<- auditapi.Event) error {
+	defer close(eventCh)
+
 	file, err := os.Open(path)
 	if err != nil {
 		return err
 	}
-	r := jsonl.NewReader(file)
-	go func() {
-		err := r.ReadLines(func(data []byte) error {
-			var event auditapi.Event
-			if err := json.Unmarshal(data, &event); err != nil {
-				return err
-			}
-			eventCh <- event
-			return nil
-		})
-		if err != nil {
-			klog.Fatal(err)
+	defer file.Close()
+
+	// Attempt to read as gzip
+	var reader io.Reader
+	fz, err := gzip.NewReader(file)
+	if err != nil {
+		reader = file
+	} else {
+		reader = fz
+		defer fz.Close()
+	}
+
+	r := jsonl.NewReader(reader)
+	err = r.ReadLines(func(data []byte) error {
+		var event auditapi.Event
+		if err := json.Unmarshal(data, &event); err != nil {
+			return err
 		}
-		close(eventCh)
-	}()
+		eventCh <- event
+		return nil
+	})
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
