@@ -19,8 +19,8 @@ import (
 	"time"
 
 	"github.com/melbahja/got"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/net/html"
-	"k8s.io/klog/v2"
 )
 
 const (
@@ -81,8 +81,8 @@ func getLinksFromURL(netClient *http.Client, url string) ([]string, error) {
 }
 
 // fetchAuditLogsTar retrieves metrics tarball URL from Prow information and constructs the expected metrics URL.
-func fetchAuditLogsTar(url *url.URL) (ProwInfo, error) {
-	prowInfo, err := getTarURLFromProw(url)
+func fetchAuditLogsTar(logger *logrus.Logger, url *url.URL) (ProwInfo, error) {
+	prowInfo, err := getTarURLFromProw(logger, url)
 	if err != nil {
 		return prowInfo, err
 	}
@@ -116,7 +116,7 @@ func fetchAuditLogsTar(url *url.URL) (ProwInfo, error) {
 	return prowInfo, nil
 }
 
-func getTarURLFromProw(baseURL *url.URL) (ProwInfo, error) {
+func getTarURLFromProw(logger *logrus.Logger, baseURL *url.URL) (ProwInfo, error) {
 	prowInfo := ProwInfo{}
 
 	var netClient = &http.Client{
@@ -132,7 +132,7 @@ func getTarURLFromProw(baseURL *url.URL) (ProwInfo, error) {
 	}
 	gcsTempURL := ""
 	for _, link := range prowToplinks {
-		klog.Infof("link: %s", link)
+		logger.Infof("link: %s", link)
 		if strings.Contains(link, gcsLinkToken) {
 			gcsTempURL = link
 			break
@@ -193,13 +193,13 @@ func getTarURLFromProw(baseURL *url.URL) (ProwInfo, error) {
 	}
 	tmpE2eURL := ""
 	for _, link := range artifactLinksToplinks {
-		klog.Infof("link: %s", link)
+		logger.Infof("link: %s", link)
 		linkSplitBySlash := strings.Split(link, "/")
 		lastPathSegment := linkSplitBySlash[len(linkSplitBySlash)-1]
 		if len(lastPathSegment) == 0 {
 			lastPathSegment = linkSplitBySlash[len(linkSplitBySlash)-2]
 		}
-		klog.Infof("lastPathSection: %s", lastPathSegment)
+		logger.Infof("lastPathSection: %s", lastPathSegment)
 		if strings.Contains(lastPathSegment, e2ePrefix) {
 			tmpE2eURL = gcsPrefix + link
 			break
@@ -226,13 +226,13 @@ func getTarURLFromProw(baseURL *url.URL) (ProwInfo, error) {
 
 	var candidates []*url.URL
 	for _, link := range e2eToplinks {
-		klog.Infof("link: %s", link)
+		logger.Infof("link: %s", link)
 		linkSplitBySlash := strings.Split(link, "/")
 		lastPathSegment := linkSplitBySlash[len(linkSplitBySlash)-1]
 		if len(lastPathSegment) == 0 {
 			lastPathSegment = linkSplitBySlash[len(linkSplitBySlash)-2]
 		}
-		klog.Infof("lastPathSection: %s", lastPathSegment)
+		logger.Infof("lastPathSection: %s", lastPathSegment)
 		switch lastPathSegment {
 		case "artifacts":
 			continue
@@ -272,13 +272,13 @@ func getTarURLFromProw(baseURL *url.URL) (ProwInfo, error) {
 			return prowInfo, fmt.Errorf("no top links at %s found", e2eURL)
 		}
 		for _, link := range e2eToplinks {
-			klog.Infof("link: %s", link)
+			logger.Infof("link: %s", link)
 			linkSplitBySlash := strings.Split(link, "/")
 			lastPathSegment := linkSplitBySlash[len(linkSplitBySlash)-1]
 			if len(lastPathSegment) == 0 {
 				lastPathSegment = linkSplitBySlash[len(linkSplitBySlash)-2]
 			}
-			klog.Infof("lastPathSection: %s", lastPathSegment)
+			logger.Infof("lastPathSection: %s", lastPathSegment)
 			if lastPathSegment == artifactsPath {
 				tmpGatherExtraURL := gcsPrefix + link
 				gatherExtraURL, err = url.Parse(tmpGatherExtraURL)
@@ -332,13 +332,13 @@ func getTimeStampFromProwJSON(rawURL string) (time.Time, error) {
 	return time.Unix(int64(prowInfo.Timestamp), 0), nil
 }
 
-func fetchAuditLogsFromProwJob(prowJobURL *url.URL) (string, error) {
+func fetchAuditLogsFromProwJob(logger *logrus.Logger, prowJobURL *url.URL) (string, error) {
 	tmpDir, err := os.MkdirTemp("", "audit-span")
 	if err != nil {
 		return "", err
 	}
 
-	prowjobInfo, err := fetchAuditLogsTar(prowJobURL)
+	prowjobInfo, err := fetchAuditLogsTar(logger, prowJobURL)
 	if err != nil {
 		return "", err
 	}
@@ -347,14 +347,14 @@ func fetchAuditLogsFromProwJob(prowJobURL *url.URL) (string, error) {
 	auditLogArchiveFilename := auditLogArchiveSplit[len(auditLogArchiveSplit)-1]
 
 	auditLogPath := filepath.Join(tmpDir, auditLogArchiveFilename)
-	klog.Infof("Downloading %s to %s", prowjobInfo.AuditLogsTarURL, auditLogPath)
+	logger.Infof("Downloading %s to %s", prowjobInfo.AuditLogsTarURL, auditLogPath)
 
 	g := got.New()
 	if err = g.Download(prowjobInfo.AuditLogsTarURL, auditLogPath); err != nil {
 		return "", err
 	}
 	// Unpack audit tar.gzs from audit-tar
-	extractedArchives, err := untarIt(tmpDir, auditLogPath)
+	extractedArchives, err := untarIt(logger, tmpDir, auditLogPath)
 	if err != nil {
 		return tmpDir, err
 	}
@@ -366,7 +366,7 @@ func fetchAuditLogsFromProwJob(prowJobURL *url.URL) (string, error) {
 	errs := []error{}
 	extractedLogFiles := []string{}
 	for _, auditTarGz := range extractedArchives {
-		extractedFile, err := unGzIt(auditTarGz)
+		extractedFile, err := unGzIt(logger, auditTarGz)
 		if err != nil {
 			errs = append(errs, err)
 		}
@@ -381,11 +381,11 @@ func fetchAuditLogsFromProwJob(prowJobURL *url.URL) (string, error) {
 	}
 
 	// List files in tmp dir and extact them all with no filter
-	klog.Infof("Created %d files in %s", len(extractedLogFiles), tmpDir)
+	logger.Infof("Created %d files in %s", len(extractedLogFiles), tmpDir)
 	return tmpDir, nil
 }
 
-func findAuditLogsInDir(auditLogDir string) ([]string, error) {
+func findAuditLogsInDir(logger *logrus.Logger, auditLogDir string) ([]string, error) {
 	foundFiles := []string{}
 	err := filepath.WalkDir(auditLogDir, func(path string, di fs.DirEntry, err error) error {
 		if !strings.Contains(path, ".log") {
@@ -394,12 +394,12 @@ func findAuditLogsInDir(auditLogDir string) ([]string, error) {
 		foundFiles = append(foundFiles, path)
 		return nil
 	})
-	klog.Infof("Found %d log files in %s", len(foundFiles), auditLogDir)
+	logger.Infof("Found %d log files in %s", len(foundFiles), auditLogDir)
 	return foundFiles, err
 }
 
-func unGzIt(mpath string) (string, error) {
-	klog.Infof("Ungzipping %s", mpath)
+func unGzIt(logger *logrus.Logger, mpath string) (string, error) {
+	logger.Infof("Ungzipping %s", mpath)
 	fr, err := read(mpath)
 	if err != nil {
 		return "", err
@@ -424,10 +424,10 @@ func unGzIt(mpath string) (string, error) {
 	return localPath, nil
 }
 
-func untarIt(tmpDir string, mpath string) ([]string, error) {
+func untarIt(logger *logrus.Logger, tmpDir string, mpath string) ([]string, error) {
 	result := []string{}
 
-	klog.Infof("Untarring %s", mpath)
+	logger.Infof("Untarring %s", mpath)
 	fr, err := read(mpath)
 	if err != nil {
 		return result, err
@@ -470,7 +470,7 @@ func untarIt(tmpDir string, mpath string) ([]string, error) {
 		}
 
 		localPath := filepath.Join(subDirPath, filepath.Base(path))
-		klog.Infof("Extracting %s to %s", path, localPath)
+		logger.Infof("Extracting %s to %s", path, localPath)
 		ow, err := overwrite(localPath)
 		if err != nil {
 			errs = append(errs, err)

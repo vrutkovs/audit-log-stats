@@ -10,11 +10,11 @@ import (
 
 	"github.com/afiskon/promtail-client/promtail"
 	"github.com/simonfrey/jsonl"
+	"github.com/sirupsen/logrus"
 	auditapi "k8s.io/apiserver/pkg/apis/audit/v1"
-	"k8s.io/klog/v2"
 )
 
-func parseAuditLogAndSendToOLTP(path string, loki promtail.Client) error {
+func parseAuditLogAndSendToOLTP(logger *logrus.Logger, path string, loki promtail.Client) error {
 	var errs []error
 	counter := 0
 	eventCh := make(chan auditapi.Event)
@@ -35,7 +35,7 @@ func parseAuditLogAndSendToOLTP(path string, loki promtail.Client) error {
 			counter++
 		}
 	}
-	klog.Infof("Sent %d audit log events from %s to Loki", counter, path)
+	logger.WithFields(logrus.Fields{"events": counter, "path": path}).Info("Log events sent")
 	return errors.Join(errs...)
 }
 

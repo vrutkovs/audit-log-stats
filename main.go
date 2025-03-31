@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/afiskon/promtail-client/promtail"
-	"k8s.io/klog/v2"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -17,6 +17,8 @@ func main() {
 		auditLogDir string
 		debug       bool
 	)
+	logger := setupLogger()
+
 	flag.StringVar(&lokiAddr, "loki-addr", "http://localhost:9428/insert/loki/api/v1/push", "URL to push logs to")
 	flag.StringVar(&prowjob, "prow-job", "", "prowjob URL")
 	flag.StringVar(&auditLogDir, "audit-log-dir", "", "path to dir with audit logs")
@@ -25,35 +27,35 @@ func main() {
 
 	prowjobUrl, err := url.Parse(prowjob)
 	if err != nil {
-		klog.Fatal(err)
+		logger.Fatal(err)
 	}
 
 	if len(auditLogDir) == 0 {
 		var err error
-		auditLogDir, err = fetchAuditLogsFromProwJob(prowjobUrl)
+		auditLogDir, err = fetchAuditLogsFromProwJob(logger, prowjobUrl)
 		if err != nil {
-			klog.Fatal(err)
+			logger.Fatal(err)
 		}
 	}
 
-	auditLogFiles, err := findAuditLogsInDir(auditLogDir)
+	auditLogFiles, err := findAuditLogsInDir(logger, auditLogDir)
 	if err != nil {
-		klog.Fatal(err)
+		logger.Fatal(err)
 	}
 	for _, auditLogPath := range auditLogFiles {
 		labels := fmt.Sprintf(`{prowjob="%s", filename="%s"}`, prowjob, auditLogPath)
-		loki, err := prepareLoki(labels, lokiAddr, debug)
+		loki, err := prepareLoki(logger, labels, lokiAddr, debug)
 		if err != nil {
-			klog.Fatal(err)
+			logger.Fatal(err)
 		}
-		if err = parseAuditLogAndSendToOLTP(auditLogPath, loki); err != nil {
-			klog.Warning(err)
+		if err = parseAuditLogAndSendToOLTP(logger, auditLogPath, loki); err != nil {
+			logger.Warning(err)
 		}
 	}
-	klog.Infof("Done")
+	logger.Info("Done")
 }
 
-func prepareLoki(labels, lokiAddr string, debug bool) (promtail.Client, error) {
+func prepareLoki(logger *logrus.Logger, labels, lokiAddr string, debug bool) (promtail.Client, error) {
 	printLevel := promtail.DISABLE
 	if debug {
 		printLevel = promtail.DEBUG
@@ -66,5 +68,13 @@ func prepareLoki(labels, lokiAddr string, debug bool) (promtail.Client, error) {
 		SendLevel:          promtail.DEBUG,
 		PrintLevel:         printLevel,
 	}
-	return promtail.NewClientProto(conf)
+	return promtail.NewClientProto(conf, logger)
+}
+
+func setupLogger() *logrus.Logger {
+	logger := logrus.New()
+	logger.SetFormatter(&logrus.TextFormatter{
+		ForceColors: true, // Enable colors in the output
+	})
+	return logger
 }

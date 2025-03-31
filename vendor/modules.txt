@@ -38,6 +38,9 @@ github.com/modern-go/reflect2
 # github.com/simonfrey/jsonl v0.0.0-20240904112901-935399b9a740
 ## explicit; go 1.18
 github.com/simonfrey/jsonl
+# github.com/sirupsen/logrus v1.9.3
+## explicit; go 1.13
+github.com/sirupsen/logrus
 # github.com/x448/float16 v0.8.4
 ## explicit; go 1.11
 github.com/x448/float16
@@ -49,6 +52,10 @@ golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
+# golang.org/x/sys v0.25.0
+## explicit; go 1.18
+golang.org/x/sys/unix
+golang.org/x/sys/windows
 # golang.org/x/text v0.18.0
 ## explicit; go 1.18
 golang.org/x/text/secure/bidirule

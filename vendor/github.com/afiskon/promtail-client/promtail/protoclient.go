@@ -11,7 +11,7 @@ import (
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/golang/snappy"
 
-	klog "k8s.io/klog/v2"
+	"github.com/sirupsen/logrus"
 )
 
 type protoLogEntry struct {
@@ -25,14 +25,16 @@ type clientProto struct {
 	entries   chan protoLogEntry
 	waitGroup sync.WaitGroup
 	client    httpClient
+	logger    *logrus.Logger
 }
 
-func NewClientProto(conf ClientConfig) (Client, error) {
+func NewClientProto(conf ClientConfig, logger *logrus.Logger) (Client, error) {
 	client := clientProto{
 		config:  &conf,
 		quit:    make(chan struct{}),
 		entries: make(chan protoLogEntry, LOG_ENTRIES_CHAN_SIZE),
 		client:  httpClient{},
+		logger:  logger,
 	}
 
 	client.waitGroup.Add(1)
@@ -146,12 +148,12 @@ func (c *clientProto) send(entries []*logproto.Entry) {
 
 	resp, body, err := c.client.sendJsonReq("POST", c.config.PushURL, "application/x-protobuf", buf)
 	if err != nil {
-		klog.Fatalf("promtail.ClientProto: unable to send an HTTP request: %s\n", err)
+		c.logger.Fatalf("promtail.ClientProto: unable to send an HTTP request: %s\n", err)
 		return
 	}
 
 	if resp.StatusCode != 204 {
-		klog.Fatalf("promtail.ClientProto: Unexpected HTTP status code: %d, message: %s\n", resp.StatusCode, body)
+		c.logger.Fatalf("promtail.ClientProto: Unexpected HTTP status code: %d, message: %s\n", resp.StatusCode, body)
 		return
 	}
 }
