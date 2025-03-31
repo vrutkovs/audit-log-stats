@@ -148,12 +148,12 @@ func (c *clientProto) send(entries []*logproto.Entry) {
 
 	resp, body, err := c.client.sendJsonReq("POST", c.config.PushURL, "application/x-protobuf", buf)
 	if err != nil {
-		c.logger.Fatalf("promtail.ClientProto: unable to send an HTTP request: %s\n", err)
+		c.logger.WithFields(logrus.Fields{"err": err}).Fatalf("promtail.ClientProto: unable to send an HTTP request")
 		return
 	}
 
 	if resp.StatusCode != 204 {
-		c.logger.Fatalf("promtail.ClientProto: Unexpected HTTP status code: %d, message: %s\n", resp.StatusCode, body)
+		c.logger.WithFields(logrus.Fields{"status": resp.StatusCode, "body": body}).Fatalf("promtail.ClientProto: Unexpected HTTP status code")
 		return
 	}
 }

@@ -132,7 +132,7 @@ func getTarURLFromProw(logger *logrus.Logger, baseURL *url.URL) (ProwInfo, error
 	}
 	gcsTempURL := ""
 	for _, link := range prowToplinks {
-		logger.Infof("link: %s", link)
+		logger.WithFields(logrus.Fields{"link": link})
 		if strings.Contains(link, gcsLinkToken) {
 			gcsTempURL = link
 			break
@@ -193,13 +193,13 @@ func getTarURLFromProw(logger *logrus.Logger, baseURL *url.URL) (ProwInfo, error
 	}
 	tmpE2eURL := ""
 	for _, link := range artifactLinksToplinks {
-		logger.Infof("link: %s", link)
+		logger.WithFields(logrus.Fields{"link": link})
 		linkSplitBySlash := strings.Split(link, "/")
 		lastPathSegment := linkSplitBySlash[len(linkSplitBySlash)-1]
 		if len(lastPathSegment) == 0 {
 			lastPathSegment = linkSplitBySlash[len(linkSplitBySlash)-2]
 		}
-		logger.Infof("lastPathSection: %s", lastPathSegment)
+		logger.WithFields(logrus.Fields{"lastPathSegment": lastPathSegment})
 		if strings.Contains(lastPathSegment, e2ePrefix) {
 			tmpE2eURL = gcsPrefix + link
 			break
@@ -226,13 +226,13 @@ func getTarURLFromProw(logger *logrus.Logger, baseURL *url.URL) (ProwInfo, error
 
 	var candidates []*url.URL
 	for _, link := range e2eToplinks {
-		logger.Infof("link: %s", link)
+		logger.WithFields(logrus.Fields{"link": link})
 		linkSplitBySlash := strings.Split(link, "/")
 		lastPathSegment := linkSplitBySlash[len(linkSplitBySlash)-1]
 		if len(lastPathSegment) == 0 {
 			lastPathSegment = linkSplitBySlash[len(linkSplitBySlash)-2]
 		}
-		logger.Infof("lastPathSection: %s", lastPathSegment)
+		logger.WithFields(logrus.Fields{"lastPathSection": lastPathSegment})
 		switch lastPathSegment {
 		case "artifacts":
 			continue
@@ -272,13 +272,13 @@ func getTarURLFromProw(logger *logrus.Logger, baseURL *url.URL) (ProwInfo, error
 			return prowInfo, fmt.Errorf("no top links at %s found", e2eURL)
 		}
 		for _, link := range e2eToplinks {
-			logger.Infof("link: %s", link)
+			logger.WithFields(logrus.Fields{"link": link})
 			linkSplitBySlash := strings.Split(link, "/")
 			lastPathSegment := linkSplitBySlash[len(linkSplitBySlash)-1]
 			if len(lastPathSegment) == 0 {
 				lastPathSegment = linkSplitBySlash[len(linkSplitBySlash)-2]
 			}
-			logger.Infof("lastPathSection: %s", lastPathSegment)
+			logger.WithFields(logrus.Fields{"lastPathSection": lastPathSegment})
 			if lastPathSegment == artifactsPath {
 				tmpGatherExtraURL := gcsPrefix + link
 				gatherExtraURL, err = url.Parse(tmpGatherExtraURL)
@@ -347,7 +347,7 @@ func fetchAuditLogsFromProwJob(logger *logrus.Logger, prowJobURL *url.URL) (stri
 	auditLogArchiveFilename := auditLogArchiveSplit[len(auditLogArchiveSplit)-1]
 
 	auditLogPath := filepath.Join(tmpDir, auditLogArchiveFilename)
-	logger.Infof("Downloading %s to %s", prowjobInfo.AuditLogsTarURL, auditLogPath)
+	logger.WithFields(logrus.Fields{"url": prowjobInfo.AuditLogsTarURL, "path": auditLogPath}).Info("Downloading audit logs")
 
 	g := got.New()
 	if err = g.Download(prowjobInfo.AuditLogsTarURL, auditLogPath); err != nil {
@@ -381,7 +381,7 @@ func fetchAuditLogsFromProwJob(logger *logrus.Logger, prowJobURL *url.URL) (stri
 	}
 
 	// List files in tmp dir and extact them all with no filter
-	logger.Infof("Created %d files in %s", len(extractedLogFiles), tmpDir)
+	logger.WithFields(logrus.Fields{"files": len(extractedLogFiles), "dir": tmpDir}).Info("Extracted files")
 	return tmpDir, nil
 }
 
@@ -394,12 +394,12 @@ func findAuditLogsInDir(logger *logrus.Logger, auditLogDir string) ([]string, er
 		foundFiles = append(foundFiles, path)
 		return nil
 	})
-	logger.Infof("Found %d log files in %s", len(foundFiles), auditLogDir)
+	logger.WithFields(logrus.Fields{"files": len(foundFiles), "dir": auditLogDir}).Info("Found log files")
 	return foundFiles, err
 }
 
 func unGzIt(logger *logrus.Logger, mpath string) (string, error) {
-	logger.Infof("Ungzipping %s", mpath)
+	logger.WithFields(logrus.Fields{"file": mpath}).Info("Ungzipping")
 	fr, err := read(mpath)
 	if err != nil {
 		return "", err
@@ -427,7 +427,7 @@ func unGzIt(logger *logrus.Logger, mpath string) (string, error) {
 func untarIt(logger *logrus.Logger, tmpDir string, mpath string) ([]string, error) {
 	result := []string{}
 
-	logger.Infof("Untarring %s", mpath)
+	logger.WithFields(logrus.Fields{"file": mpath}).Infof("Untarring")
 	fr, err := read(mpath)
 	if err != nil {
 		return result, err
@@ -470,7 +470,7 @@ func untarIt(logger *logrus.Logger, tmpDir string, mpath string) ([]string, erro
 		}
 
 		localPath := filepath.Join(subDirPath, filepath.Base(path))
-		logger.Infof("Extracting %s to %s", path, localPath)
+		logger.WithFields(logrus.Fields{"file": path, "destination": localPath}).Infof("Extracting")
 		ow, err := overwrite(localPath)
 		if err != nil {
 			errs = append(errs, err)
