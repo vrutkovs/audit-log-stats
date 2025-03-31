@@ -36,6 +36,7 @@ spec:
           image: docker.io/victoriametrics/victoria-logs:v1.17.0-victorialogs
           args:
             - --retentionPeriod=1y
+            - --logIngestedRows=true
           ports:
             - containerPort: 9428
               hostPort: 9428
