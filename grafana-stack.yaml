@@ -37,6 +37,7 @@ spec:
           args:
             - --retentionPeriod=1y
             - --logIngestedRows=true
+            - --loki.maxRequestSize=128Mb
           ports:
             - containerPort: 9428
               hostPort: 9428

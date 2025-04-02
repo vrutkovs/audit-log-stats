@@ -16,6 +16,12 @@ func NewReader(r io.Reader) Reader {
 	scanner := bufio.NewScanner(r)
 	scanner.Split(bufio.ScanLines)
 
+	// Open with large buffer as some CSV lines can be very long
+	// scanner.Buffer(buf, maxCapacity)
+	const maxCapacity = 512 * 1024 // 512KB, adjust as needed
+	buf := make([]byte, 0, 64*1024)
+	scanner.Buffer(buf, maxCapacity)
+
 	return Reader{
 		r:       r,
 		scanner: scanner,
