@@ -12,13 +12,13 @@ type Reader struct {
 	scanner *bufio.Scanner
 }
 
+const maxCapacity = 512 * 1024 // 512KB, adjust as needed
+
 func NewReader(r io.Reader) Reader {
 	scanner := bufio.NewScanner(r)
 	scanner.Split(bufio.ScanLines)
 
 	// Open with large buffer as some CSV lines can be very long
-	// scanner.Buffer(buf, maxCapacity)
-	const maxCapacity = 512 * 1024 // 512KB, adjust as needed
 	buf := make([]byte, 0, 64*1024)
 	scanner.Buffer(buf, maxCapacity)
 
@@ -38,7 +38,7 @@ func (r Reader) Close() error {
 func (r Reader) ReadSingleLine(output interface{}) error {
 	ok := r.scanner.Scan()
 	if !ok {
-		return fmt.Errorf("could not read from scanner. Scanner done")
+		return fmt.Errorf("could not read from scanner: %w", r.scanner.Err())
 	}
 
 	return json.Unmarshal(r.scanner.Bytes(), output)
@@ -51,5 +51,5 @@ func (r Reader) ReadLines(callback func(data []byte) error) error {
 			return fmt.Errorf("error in callback: %w", err)
 		}
 	}
-	return nil
+	return r.scanner.Err()
 }
