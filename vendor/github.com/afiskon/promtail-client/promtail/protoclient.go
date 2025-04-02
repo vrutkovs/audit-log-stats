@@ -153,7 +153,7 @@ func (c *clientProto) send(entries []*logproto.Entry) {
 	}
 
 	if resp.StatusCode != 204 {
-		c.logger.WithFields(logrus.Fields{"status": resp.StatusCode, "body": body}).Fatalf("promtail.ClientProto: Unexpected HTTP status code")
+		c.logger.WithFields(logrus.Fields{"status": resp.StatusCode, "body": string(body)}).Fatalf("promtail.ClientProto: Unexpected HTTP status code")
 		return
 	}
 }
