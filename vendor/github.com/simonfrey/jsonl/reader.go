@@ -12,7 +12,7 @@ type Reader struct {
 	scanner *bufio.Scanner
 }
 
-const maxCapacity = 512 * 1024 // 512KB, adjust as needed
+const maxCapacity = 30 * 1024 * 1024 // 512KB, adjust as needed
 
 func NewReader(r io.Reader) Reader {
 	scanner := bufio.NewScanner(r)
