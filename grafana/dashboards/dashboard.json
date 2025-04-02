@@ -2025,6 +2025,7 @@
           "type": "victoriametrics-logs-datasource",
           "uid": "${ds}"
         },
+        "includeAll": true,
         "label": "Resource",
         "name": "objRefResource",
         "options": [],
