@@ -1,7 +1,8 @@
 # Audit Log metrics
 
-This app parses audit log and sends them to VictoriaMetrics. Grafana dashboard is rendering stats derived from
-those to find noisy apps or requests taking too much time.
+This app parses kubernetes audit log files and sends them to VictoriaMetrics. Grafana dashboard is rendering stats derived from those to find noisy apps or requests taking too much time.
+
+See [k8s documentation](https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/) for more information on how to enable audit logs and where to find them.
 
 ## Howto
 
