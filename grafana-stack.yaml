@@ -33,7 +33,7 @@ spec:
           securityContext:
             runAsUser: 0
         - name: vlogs
-          image: docker.io/victoriametrics/victoria-logs:v1.17.0-victorialogs
+          image: docker.io/victoriametrics/victoria-logs:v1.24.0-victorialogs
           args:
             - --retentionPeriod=1y
             - --logIngestedRows=true
