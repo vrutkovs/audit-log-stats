@@ -2077,8 +2077,8 @@
     ]
   },
   "time": {
-    "from": "now",
-    "to": "now-30d"
+    "from": "now-30d",
+    "to": "now"
   },
   "timepicker": {},
   "timezone": "browser",
