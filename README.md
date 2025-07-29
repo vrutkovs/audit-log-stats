@@ -77,6 +77,10 @@ The `grafana-stack.yaml` file defines the deployment for Grafana and VictoriaMet
 
 Enable debug mode by passing the `--debug` flag when running the application.
 
+### Teardown
+
+Run `podman play kube --down grafana-stack.yaml` to stop and remove containers. In case you want to start with fresh Grafana/VictoriaLogs DB you can clean up data with `git clean -fdx` command
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
