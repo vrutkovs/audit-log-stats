@@ -1,13 +1,13 @@
 # Audit Log Metrics
 
-This app parses Kubernetes audit log files and sends them to VictoriaMetrics. A Grafana dashboard is used to render statistics derived from these logs, helping to identify noisy applications or requests that take too much time.
+This app parses Kubernetes audit log files and sends them to VictoriaLogs. A Grafana dashboard is used to render statistics derived from these logs, helping to identify noisy applications or requests that take too much time.
 
 See [Kubernetes documentation](https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/) for more information on enabling audit logs and locating them.
 
 ## Features
 
 - Parses Kubernetes audit logs (supports `.log` and `.gz` formats).
-- Sends parsed metrics to VictoriaMetrics via Loki-compatible endpoints.
+- Sends parsed metrics to VictoriaLogs via Loki-compatible endpoints.
 - Provides a Grafana dashboard for visualizing metrics.
 - Supports fetching audit logs directly from OpenShift CI Prow jobs.
 
@@ -21,8 +21,8 @@ See [Kubernetes documentation](https://kubernetes.io/docs/tasks/debug/debug-clus
 
 Clone the repository:
   ```bash
-  git clone https://github.com/vrutkovs/audit-span.git
-  cd audit-span
+  git clone https://github.com/vrutkovs/audit-log-stats.git
+  cd audit-log-stats
   ```
 
 ## Usage
@@ -34,7 +34,7 @@ Run the following command to start the Grafana stack:
 podman play kube grafana-stack.yaml
 ```
 
-This will start Grafana and VictoriaMetrics Logs on their respective ports.
+This will start Grafana and VictoriaLogs on their respective ports.
 
 ### Parse Audit Logs
 
@@ -60,7 +60,7 @@ Locate the "Audit Log" dashboard to view metrics.
 
 ### Grafana Stack
 
-The `grafana-stack.yaml` file defines the deployment for Grafana and VictoriaMetrics Logs. You can customize it as needed, such as changing ports or volume paths.
+The `grafana-stack.yaml` file defines the deployment for Grafana and VictoriaLogs. You can customize it as needed, such as changing ports or volume paths.
 
 ### Datasources and Dashboards
 
