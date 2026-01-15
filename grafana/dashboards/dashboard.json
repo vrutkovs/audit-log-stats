@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "id": 1,
+  "id": 0,
   "links": [],
   "panels": [
     {
@@ -30,49 +30,52 @@
         "y": 0
       },
       "id": 27,
-      "panels": [],
-      "title": "Matched audit log events",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "victoriametrics-logs-datasource",
-        "uid": "PD775F2863313E6C7"
-      },
-      "fieldConfig": {
-        "defaults": {},
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 1
-      },
-      "id": 28,
-      "options": {
-        "dedupStrategy": "none",
-        "enableInfiniteScrolling": true,
-        "enableLogDetails": true,
-        "prettifyLogMessage": true,
-        "showCommonLabels": false,
-        "showLabels": false,
-        "showTime": true,
-        "sortOrder": "Descending",
-        "wrapLogMessage": false
-      },
-      "pluginVersion": "11.6.0",
-      "targets": [
+      "panels": [
         {
-          "editorMode": "code",
-          "expr": "user.username: ${username} | verb: ${verb} | objectRef.resource: ${objRefResource} | objectRef.namespace:~\"${objRefNamespace}\" | objectRef.subresource:~\"${objRefSubresource}\"",
-          "maxLines": 100,
-          "queryType": "instant",
-          "refId": "A"
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "PD775F2863313E6C7"
+          },
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 1
+          },
+          "id": 28,
+          "options": {
+            "dedupStrategy": "none",
+            "enableInfiniteScrolling": true,
+            "enableLogDetails": true,
+            "prettifyLogMessage": true,
+            "showCommonLabels": false,
+            "showControls": false,
+            "showLabels": false,
+            "showTime": true,
+            "sortOrder": "Descending",
+            "wrapLogMessage": false
+          },
+          "pluginVersion": "12.3.1",
+          "targets": [
+            {
+              "direction": "desc",
+              "editorMode": "code",
+              "expr": "user.username: ${username} verb: ${verb} objectRef.resource: ${objRefResource} objectRef.namespace:~\"${objRefNamespace}\" objectRef.subresource:~\"${objRefSubresource}\"",
+              "maxLines": 100,
+              "queryType": "instant",
+              "refId": "A"
+            }
+          ],
+          "title": "",
+          "type": "logs"
         }
       ],
-      "title": "",
-      "type": "logs"
+      "title": "Matched audit log events",
+      "type": "row"
     },
     {
       "collapsed": false,
@@ -80,7 +83,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 9
+        "y": 1
       },
       "id": 19,
       "panels": [],
@@ -103,9 +106,9 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "barAlignment": 0,
+            "barAlignment": 1,
             "barWidthFactor": 0.6,
-            "drawStyle": "line",
+            "drawStyle": "bars",
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
@@ -113,7 +116,7 @@
               "tooltip": false,
               "viz": false
             },
-            "insertNulls": 300000,
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -121,6 +124,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -135,7 +139,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -151,7 +156,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 10
+        "y": 2
       },
       "id": 1,
       "options": {
@@ -167,7 +172,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
           "datasource": {
@@ -175,7 +180,7 @@
             "uid": "${ds}"
           },
           "editorMode": "code",
-          "expr": "user.username: ${username} | verb: ${verb} | objectRef.resource: ${objRefResource} | objectRef.namespace:~\"${objRefNamespace}\" | objectRef.subresource:~\"${objRefSubresource}\"  | annotations.apiserver.latency.k8s.io/total:* | math \"annotations.apiserver.latency.k8s.io/total\" as total_latency | stats by (user.username) sum(total_latency) sum_total",
+          "expr": "user.username:${username} verb:${verb} objectRef.resource:${objRefResource} objectRef.namespace:~\"${objRefNamespace}\" objectRef.subresource:~\"${objRefSubresource}\" | annotations.apiserver.latency.k8s.io/total:* | math \"annotations.apiserver.latency.k8s.io/total\" as total_latency | stats by (user.username) sum(total_latency) sum_total | sum_total:>5s",
           "queryType": "statsRange",
           "refId": "A"
         }
@@ -199,9 +204,9 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "barAlignment": 0,
+            "barAlignment": 1,
             "barWidthFactor": 0.6,
-            "drawStyle": "line",
+            "drawStyle": "bars",
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
@@ -217,10 +222,11 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
-              "mode": "none"
+              "mode": "normal"
             },
             "thresholdsStyle": {
               "mode": "off"
@@ -231,7 +237,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -247,7 +254,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 10
+        "y": 2
       },
       "id": 8,
       "options": {
@@ -263,7 +270,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
           "datasource": {
@@ -271,7 +278,7 @@
             "uid": "${ds}"
           },
           "editorMode": "code",
-          "expr": "user.username: ${username} | verb: ${verb} | objectRef.resource: ${objRefResource} | objectRef.namespace:~\"${objRefNamespace}\" | objectRef.subresource:~\"${objRefSubresource}\" | annotations.apiserver.latency.k8s.io/etcd: * | math \"annotations.apiserver.latency.k8s.io/etcd\" as total_latency | stats by (user.username) sum(total_latency) sum_total",
+          "expr": "user.username:${username} verb:${verb} objectRef.resource:${objRefResource} objectRef.namespace:~\"${objRefNamespace}\" objectRef.subresource:~\"${objRefSubresource}\" | annotations.apiserver.latency.k8s.io/etcd: * | math \"annotations.apiserver.latency.k8s.io/etcd\" as total_latency | stats by (user.username) sum(total_latency) sum_total | sum_total:>5s",
           "queryType": "statsRange",
           "refId": "A"
         }
@@ -295,9 +302,9 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "barAlignment": 0,
+            "barAlignment": 1,
             "barWidthFactor": 0.6,
-            "drawStyle": "line",
+            "drawStyle": "bars",
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
@@ -313,6 +320,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -327,7 +335,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -343,103 +352,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 18
-      },
-      "id": 7,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "11.6.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "victoriametrics-logs-datasource",
-            "uid": "${ds}"
-          },
-          "editorMode": "code",
-          "expr": "user.username: ${username} | verb: ${verb} | objectRef.resource: ${objRefResource} | objectRef.namespace:~\"${objRefNamespace}\" | objectRef.subresource:~\"${objRefSubresource}\" | annotations.apiserver.latency.k8s.io/response-write:* | math \"annotations.apiserver.latency.k8s.io/response-write\" as total_latency | stats by (user.username) sum(total_latency) sum_total",
-          "queryType": "statsRange",
-          "refId": "A"
-        }
-      ],
-      "title": "Large write operations per username",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "victoriametrics-logs-datasource",
-        "uid": "${ds}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": 300000,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "ns"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 18
+        "y": 10
       },
       "id": 10,
       "options": {
@@ -455,7 +368,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
           "datasource": {
@@ -463,7 +376,7 @@
             "uid": "${ds}"
           },
           "editorMode": "code",
-          "expr": "user.username: ${username} | verb: ${verb} | objectRef.resource: ${objRefResource} | objectRef.namespace:~\"${objRefNamespace}\" | objectRef.subresource:~\"${objRefSubresource}\"| annotations.apiserver.latency.k8s.io/apf-queue-wait:* | math \"annotations.apiserver.latency.k8s.io/apf-queue-wait\" as total_latency | stats by (user.username) sum(total_latency) sum_total",
+          "expr": "user.username:${username} verb:${verb} objectRef.resource:${objRefResource} objectRef.namespace:~\"${objRefNamespace}\" objectRef.subresource:~\"${objRefSubresource}\" | annotations.apiserver.latency.k8s.io/apf-queue-wait:* | math \"annotations.apiserver.latency.k8s.io/apf-queue-wait\" as total_latency | stats by (user.username) sum(total_latency) sum_total | sum_total:>50ms",
           "queryType": "statsRange",
           "refId": "A"
         }
@@ -487,9 +400,9 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "barAlignment": 0,
+            "barAlignment": 1,
             "barWidthFactor": 0.6,
-            "drawStyle": "line",
+            "drawStyle": "bars",
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
@@ -505,6 +418,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -519,7 +433,106 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ns"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 10
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "expr": "user.username:${username} verb:${verb} objectRef.resource:${objRefResource} objectRef.namespace:~\"${objRefNamespace}\" objectRef.subresource:~\"${objRefSubresource}\" | annotations.apiserver.latency.k8s.io/response-write:* | math \"annotations.apiserver.latency.k8s.io/response-write\" as total_latency | stats by (user.username) sum(total_latency) sum_total | sum_total:>50ms",
+          "queryType": "statsRange",
+          "refId": "A"
+        }
+      ],
+      "title": "Large write operations per username",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 1,
+            "barWidthFactor": 0.6,
+            "drawStyle": "bars",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": 300000,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -535,7 +548,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 26
+        "y": 18
       },
       "id": 9,
       "options": {
@@ -551,7 +564,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
           "datasource": {
@@ -559,7 +572,7 @@
             "uid": "${ds}"
           },
           "editorMode": "code",
-          "expr": "user.username: ${username} | verb: ${verb} | objectRef.resource: ${objRefResource} | objectRef.namespace:~\"${objRefNamespace}\" | objectRef.subresource:~\"${objRefSubresource}\" | annotations.apiserver.latency.k8s.io/mutating-webhook:* | math \"annotations.apiserver.latency.k8s.io/mutating-webhook\" as total_latency | stats by (user.username) sum(total_latency) sum_total",
+          "expr": "user.username:${username} verb:${verb} objectRef.resource:${objRefResource} objectRef.namespace:~\"${objRefNamespace}\" objectRef.subresource:~\"${objRefSubresource}\" | annotations.apiserver.latency.k8s.io/mutating-webhook:* | math \"annotations.apiserver.latency.k8s.io/mutating-webhook\" as total_latency | stats by (user.username) sum(total_latency) sum_total | sum_total:>50ms",
           "queryType": "statsRange",
           "refId": "A"
         }
@@ -583,9 +596,9 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "barAlignment": 0,
+            "barAlignment": 1,
             "barWidthFactor": 0.6,
-            "drawStyle": "line",
+            "drawStyle": "bars",
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
@@ -601,6 +614,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -615,7 +629,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -631,7 +646,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 26
+        "y": 18
       },
       "id": 11,
       "options": {
@@ -647,7 +662,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
           "datasource": {
@@ -655,7 +670,7 @@
             "uid": "${ds}"
           },
           "editorMode": "code",
-          "expr": "user.username: ${username} | verb: ${verb} | objectRef.resource: ${objRefResource} | objectRef.namespace:~\"${objRefNamespace}\" | objectRef.subresource:~\"${objRefSubresource}\"| annotations.apiserver.latency.k8s.io/decode-response-object:* | math \"annotations.apiserver.latency.k8s.io/decode-response-object\" as total_latency | stats by (user.username) sum(total_latency) sum_total",
+          "expr": "user.username:${username} verb:${verb} objectRef.resource:${objRefResource} objectRef.namespace:~\"${objRefNamespace}\" objectRef.subresource:~\"${objRefSubresource}\" | annotations.apiserver.latency.k8s.io/decode-response-object:* | math \"annotations.apiserver.latency.k8s.io/decode-response-object\" as total_latency | stats by (user.username) sum(total_latency) sum_total | sum_total:>10ms",
           "queryType": "statsRange",
           "refId": "A"
         }
@@ -679,9 +694,9 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "barAlignment": 0,
+            "barAlignment": 1,
             "barWidthFactor": 0.6,
-            "drawStyle": "line",
+            "drawStyle": "bars",
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
@@ -697,6 +712,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -711,7 +727,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -727,7 +744,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 34
+        "y": 26
       },
       "id": 12,
       "options": {
@@ -743,7 +760,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
           "datasource": {
@@ -751,7 +768,7 @@
             "uid": "${ds}"
           },
           "editorMode": "code",
-          "expr": "user.username: ${username} | verb: ${verb} | objectRef.resource: ${objRefResource}| objectRef.namespace:~\"${objRefNamespace}\" | objectRef.subresource:~\"${objRefSubresource}\"| annotations.apiserver.latency.k8s.io/transform-response-object:* | math \"annotations.apiserver.latency.k8s.io/transform-response-object\" as total_latency | stats by (user.username) sum(total_latency) sum_total",
+          "expr": "user.username:${username} verb:${verb} objectRef.resource:${objRefResource} objectRef.namespace:~\"${objRefNamespace}\" objectRef.subresource:~\"${objRefSubresource}\" | annotations.apiserver.latency.k8s.io/transform-response-object:* | math \"annotations.apiserver.latency.k8s.io/transform-response-object\" as total_latency | stats by (user.username) sum(total_latency) sum_total | sum_total:>10ms",
           "queryType": "statsRange",
           "refId": "A"
         }
@@ -775,9 +792,9 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "barAlignment": 0,
+            "barAlignment": 1,
             "barWidthFactor": 0.6,
-            "drawStyle": "line",
+            "drawStyle": "bars",
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
@@ -793,6 +810,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -807,7 +825,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -823,7 +842,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 34
+        "y": 26
       },
       "id": 13,
       "options": {
@@ -839,7 +858,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
           "datasource": {
@@ -847,7 +866,7 @@
             "uid": "${ds}"
           },
           "editorMode": "code",
-          "expr": "user.username: ${username} | verb: ${verb} | objectRef.resource: ${objRefResource}| objectRef.namespace:~\"${objRefNamespace}\" | objectRef.subresource:~\"${objRefSubresource}\"| annotations.apiserver.latency.k8s.io/serialize-response-object:* | math \"annotations.apiserver.latency.k8s.io/serialize-response-object\" as total_latency | stats by (user.username) sum(total_latency) sum_total",
+          "expr": "user.username:${username} verb:${verb} objectRef.resource:${objRefResource} objectRef.namespace:~\"${objRefNamespace}\" objectRef.subresource:~\"${objRefSubresource}\" | annotations.apiserver.latency.k8s.io/serialize-response-object:* | math \"annotations.apiserver.latency.k8s.io/serialize-response-object\" as total_latency | stats by (user.username) sum(total_latency) sum_total | sum_total:>10ms",
           "queryType": "statsRange",
           "refId": "A"
         }
@@ -861,11 +880,11 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 42
+        "y": 34
       },
       "id": 20,
       "panels": [],
-      "title": "Amount",
+      "title": "Hits",
       "type": "row"
     },
     {
@@ -884,9 +903,9 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "barAlignment": 0,
+            "barAlignment": 1,
             "barWidthFactor": 0.6,
-            "drawStyle": "line",
+            "drawStyle": "bars",
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
@@ -902,10 +921,11 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
-              "mode": "none"
+              "mode": "normal"
             },
             "thresholdsStyle": {
               "mode": "off"
@@ -916,7 +936,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -931,7 +952,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 43
+        "y": 35
       },
       "id": 2,
       "options": {
@@ -947,7 +968,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
           "datasource": {
@@ -955,7 +976,7 @@
             "uid": "${ds}"
           },
           "editorMode": "code",
-          "expr": "user.username: ${username} | verb: ${verb} | objectRef.resource: ${objRefResource}| objectRef.namespace:~\"${objRefNamespace}\" | objectRef.subresource:~\"${objRefSubresource}\"| stage:ResponseComplete | stats by (user.username) count() per_stream_logs",
+          "expr": "user.username:${username} verb:${verb} objectRef.resource:${objRefResource} objectRef.namespace:~\"${objRefNamespace}\" objectRef.subresource:~\"${objRefSubresource}\" | stage:ResponseComplete | stats by (user.username) count() per_stream_logs | per_stream_logs:>500",
           "queryType": "statsRange",
           "refId": "A"
         }
@@ -979,9 +1000,9 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "barAlignment": 0,
+            "barAlignment": 1,
             "barWidthFactor": 0.6,
-            "drawStyle": "line",
+            "drawStyle": "bars",
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
@@ -997,10 +1018,11 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
-              "mode": "none"
+              "mode": "normal"
             },
             "thresholdsStyle": {
               "mode": "off"
@@ -1011,7 +1033,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1026,7 +1049,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 43
+        "y": 35
       },
       "id": 17,
       "options": {
@@ -1042,7 +1065,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
           "datasource": {
@@ -1050,7 +1073,7 @@
             "uid": "${ds}"
           },
           "editorMode": "code",
-          "expr": "user.username: ${username} | verb: ${verb} | objectRef.resource: ${objRefResource}| objectRef.namespace:~\"${objRefNamespace}\" | objectRef.subresource:~\"${objRefSubresource}\"| stage:ResponseComplete | stats by (objectRef.apiVersion, objectRef.apiGroup, objectRef.resource) count() per_stream_logs",
+          "expr": "user.username:${username} verb:${verb} objectRef.resource:${objRefResource} objectRef.namespace:~\"${objRefNamespace}\" objectRef.subresource:~\"${objRefSubresource}\" | stage:ResponseComplete | stats by (objectRef.apiVersion, objectRef.apiGroup, objectRef.resource) count() per_stream_logs | per_stream_logs:>500",
           "queryType": "statsRange",
           "refId": "A"
         }
@@ -1074,9 +1097,9 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "barAlignment": 0,
+            "barAlignment": 1,
             "barWidthFactor": 0.6,
-            "drawStyle": "line",
+            "drawStyle": "bars",
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
@@ -1092,10 +1115,11 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
-              "mode": "none"
+              "mode": "normal"
             },
             "thresholdsStyle": {
               "mode": "off"
@@ -1106,7 +1130,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1121,7 +1146,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 51
+        "y": 43
       },
       "id": 14,
       "options": {
@@ -1137,7 +1162,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
           "datasource": {
@@ -1145,7 +1170,7 @@
             "uid": "${ds}"
           },
           "editorMode": "code",
-          "expr": "user.username: ${username} | verb: ${verb} | objectRef.resource: ${objRefResource}| objectRef.namespace:~\"${objRefNamespace}\" | objectRef.subresource:~\"${objRefSubresource}\"| stage:ResponseComplete | stats by (verb) count() per_stream_logs",
+          "expr": "user.username:${username} verb:${verb} objectRef.resource:${objRefResource} objectRef.namespace:~\"${objRefNamespace}\" objectRef.subresource:~\"${objRefSubresource}\" | stage:ResponseComplete | stats by (verb) count() per_stream_logs | per_stream_logs:>500",
           "queryType": "statsRange",
           "refId": "A"
         }
@@ -1169,9 +1194,9 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "barAlignment": 0,
+            "barAlignment": 1,
             "barWidthFactor": 0.6,
-            "drawStyle": "line",
+            "drawStyle": "bars",
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
@@ -1187,10 +1212,11 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
-              "mode": "none"
+              "mode": "normal"
             },
             "thresholdsStyle": {
               "mode": "off"
@@ -1201,7 +1227,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1216,7 +1243,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 51
+        "y": 43
       },
       "id": 26,
       "options": {
@@ -1232,7 +1259,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
           "datasource": {
@@ -1240,7 +1267,7 @@
             "uid": "${ds}"
           },
           "editorMode": "code",
-          "expr": "user.username: ${username} | verb: ${verb} | objectRef.resource: ${objRefResource}| objectRef.namespace:~\"${objRefNamespace}\" | objectRef.subresource:~\"${objRefSubresource}\"| stage:ResponseComplete | stats by (objectRef.namespace) count() per_stream_logs",
+          "expr": "user.username:${username} verb:${verb} objectRef.resource:${objRefResource} objectRef.namespace:~\"${objRefNamespace}\" objectRef.subresource:~\"${objRefSubresource}\" | stage:ResponseComplete | stats by (objectRef.namespace) count() per_stream_logs | per_stream_logs:>500",
           "queryType": "statsRange",
           "refId": "A"
         }
@@ -1264,9 +1291,9 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "barAlignment": 0,
+            "barAlignment": 1,
             "barWidthFactor": 0.6,
-            "drawStyle": "line",
+            "drawStyle": "bars",
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
@@ -1282,10 +1309,11 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
-              "mode": "none"
+              "mode": "normal"
             },
             "thresholdsStyle": {
               "mode": "off"
@@ -1296,7 +1324,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1311,7 +1340,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 59
+        "y": 51
       },
       "id": 5,
       "options": {
@@ -1327,7 +1356,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
           "datasource": {
@@ -1335,7 +1364,7 @@
             "uid": "${ds}"
           },
           "editorMode": "code",
-          "expr": "user.username: ${username} | verb: ${verb} | objectRef.resource: ${objRefResource}| objectRef.namespace:~\"${objRefNamespace}\" | objectRef.subresource:~\"${objRefSubresource}\"| stage:ResponseComplete AND verb:\"list\" | stats by (objectRef.apiGroup, objectRef.apiVersion, objectRef.resource) count() per_stream_logs",
+          "expr": "user.username:${username} verb:${verb} objectRef.resource:${objRefResource} objectRef.namespace:~\"${objRefNamespace}\" objectRef.subresource:~\"${objRefSubresource}\" | stage:ResponseComplete AND verb:\"list\" | stats by (objectRef.apiGroup, objectRef.apiVersion, objectRef.resource) count() per_stream_logs | per_stream_logs:>100",
           "queryType": "statsRange",
           "refId": "A"
         }
@@ -1359,9 +1388,9 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "barAlignment": 0,
+            "barAlignment": 1,
             "barWidthFactor": 0.6,
-            "drawStyle": "line",
+            "drawStyle": "bars",
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
@@ -1377,10 +1406,11 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
-              "mode": "none"
+              "mode": "normal"
             },
             "thresholdsStyle": {
               "mode": "off"
@@ -1391,7 +1421,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1406,7 +1437,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 59
+        "y": 51
       },
       "id": 6,
       "options": {
@@ -1422,7 +1453,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
           "datasource": {
@@ -1430,7 +1461,7 @@
             "uid": "${ds}"
           },
           "editorMode": "code",
-          "expr": "user.username: ${username} | verb: ${verb} | objectRef.resource: ${objRefResource}| objectRef.namespace:~\"${objRefNamespace}\" | objectRef.subresource:~\"${objRefSubresource}\"| stage:ResponseComplete AND verb:~\"create|update|patch|delete\" | stats by (objectRef.apiGroup, objectRef.apiVersion, objectRef.resource) count() per_stream_logs",
+          "expr": "user.username:${username} verb:${verb} objectRef.resource:${objRefResource} objectRef.namespace:~\"${objRefNamespace}\" objectRef.subresource:~\"${objRefSubresource}\" | stage:ResponseComplete AND verb:~\"create|update|patch|delete\" | stats by (objectRef.apiGroup, objectRef.apiVersion, objectRef.resource) count() per_stream_logs | per_stream_logs:>500",
           "queryType": "statsRange",
           "refId": "A"
         }
@@ -1454,9 +1485,9 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "barAlignment": 0,
+            "barAlignment": 1,
             "barWidthFactor": 0.6,
-            "drawStyle": "line",
+            "drawStyle": "bars",
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
@@ -1472,10 +1503,11 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
-              "mode": "none"
+              "mode": "normal"
             },
             "thresholdsStyle": {
               "mode": "off"
@@ -1486,7 +1518,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1501,7 +1534,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 67
+        "y": 59
       },
       "id": 16,
       "options": {
@@ -1517,7 +1550,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.6.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
           "datasource": {
@@ -1525,7 +1558,7 @@
             "uid": "${ds}"
           },
           "editorMode": "code",
-          "expr": "user.username: ${username} | verb: ${verb} | objectRef.resource: ${objRefResource}| objectRef.namespace:~\"${objRefNamespace}\" | objectRef.subresource:~\"${objRefSubresource}\"| stage:ResponseComplete | stats by (objectRef.subresource) count() per_stream_logs",
+          "expr": "user.username:${username} verb:${verb} objectRef.resource:${objRefResource} objectRef.namespace:~\"${objRefNamespace}\" objectRef.subresource:~\"${objRefSubresource}\" | stage:ResponseComplete | stats by (objectRef.subresource) count() per_stream_logs",
           "queryType": "statsRange",
           "refId": "A"
         }
@@ -1534,208 +1567,211 @@
       "type": "timeseries"
     },
     {
-      "collapsed": true,
+      "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 75
+        "y": 67
       },
       "id": 18,
-      "panels": [
-        {
-          "datasource": {
-            "type": "victoriametrics-logs-datasource",
-            "uid": "${ds}"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": 300000,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              }
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 131
-          },
-          "id": 21,
-          "options": {
-            "legend": {
-              "calcs": [],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "hideZeros": false,
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "pluginVersion": "11.6.0",
-          "targets": [
-            {
-              "datasource": {
-                "type": "victoriametrics-logs-datasource",
-                "uid": "${ds}"
-              },
-              "editorMode": "code",
-              "expr": "user.username: ${username} | verb: ${verb} | objectRef.resource: ${objRefResource}| objectRef.namespace:~\"${objRefNamespace}\" | objectRef.subresource:~\"${objRefSubresource}\"| annotations.k8s.io/deprecated:* | stats by (objectRef.apiVersion, objectRef.apiGroup, objectRef.resource) count() per_stream_logs",
-              "queryType": "statsRange",
-              "refId": "A"
-            }
-          ],
-          "title": "Deprecated requests per resource",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "victoriametrics-logs-datasource",
-            "uid": "${ds}"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": 300000,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              }
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 131
-          },
-          "id": 22,
-          "options": {
-            "legend": {
-              "calcs": [],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "hideZeros": false,
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "pluginVersion": "11.6.0",
-          "targets": [
-            {
-              "datasource": {
-                "type": "victoriametrics-logs-datasource",
-                "uid": "${ds}"
-              },
-              "editorMode": "code",
-              "expr": "user.username: ${username} | verb: ${verb} | objectRef.resource: ${objRefResource}| objectRef.namespace:~\"${objRefNamespace}\" | objectRef.subresource:~\"${objRefSubresource}\"| annotations.k8s.io/deprecated:* | stats by (user.username) count() per_stream_logs",
-              "queryType": "statsRange",
-              "refId": "A"
-            }
-          ],
-          "title": "Deprecated resource requests by user",
-          "type": "timeseries"
-        }
-      ],
+      "panels": [],
       "title": "Deprecations",
       "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 1,
+            "barWidthFactor": 0.6,
+            "drawStyle": "bars",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": 300000,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 68
+      },
+      "id": 21,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "expr": "user.username:${username} verb:${verb} objectRef.resource:${objRefResource} objectRef.namespace:~\"${objRefNamespace}\" objectRef.subresource:~\"${objRefSubresource}\" | annotations.k8s.io/deprecated:* | stats by (objectRef.apiVersion, objectRef.apiGroup, objectRef.resource) count() per_stream_logs | per_stream_logs:>10",
+          "queryType": "statsRange",
+          "refId": "A"
+        }
+      ],
+      "title": "Deprecated requests per resource",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 1,
+            "barWidthFactor": 0.6,
+            "drawStyle": "bars",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": 300000,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 68
+      },
+      "id": 22,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "expr": "user.username:${username} verb:${verb} objectRef.resource:${objRefResource} objectRef.namespace:~\"${objRefNamespace}\" objectRef.subresource:~\"${objRefSubresource}\" | annotations.k8s.io/deprecated:* | stats by (user.username) count() per_stream_logs | per_stream_logs:>50",
+          "queryType": "statsRange",
+          "refId": "A"
+        }
+      ],
+      "title": "Deprecated resource requests by user",
+      "type": "timeseries"
     },
     {
       "collapsed": true,
@@ -1763,9 +1799,9 @@
                 "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
-                "barAlignment": 0,
+                "barAlignment": 1,
                 "barWidthFactor": 0.6,
-                "drawStyle": "line",
+                "drawStyle": "bars",
                 "fillOpacity": 0,
                 "gradientMode": "none",
                 "hideFrom": {
@@ -1781,10 +1817,11 @@
                   "type": "linear"
                 },
                 "showPoints": "auto",
+                "showValues": false,
                 "spanNulls": false,
                 "stacking": {
                   "group": "A",
-                  "mode": "none"
+                  "mode": "normal"
                 },
                 "thresholdsStyle": {
                   "mode": "off"
@@ -1795,7 +1832,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": 0
                   },
                   {
                     "color": "red",
@@ -1810,7 +1848,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 140
+            "y": 85
           },
           "id": 24,
           "options": {
@@ -1826,7 +1864,7 @@
               "sort": "none"
             }
           },
-          "pluginVersion": "11.6.0",
+          "pluginVersion": "12.3.1",
           "targets": [
             {
               "datasource": {
@@ -1834,7 +1872,7 @@
                 "uid": "${ds}"
               },
               "editorMode": "code",
-              "expr": "user.username: ${username} | verb: ${verb} | objectRef.resource: ${objRefResource}| objectRef.namespace:~\"${objRefNamespace}\" | objectRef.subresource:~\"${objRefSubresource}\"| annotations.openshift.io/unready:~\"loopback=false\" | stats by (objectRef.apiVersion, objectRef.apiGroup, objectRef.resource) count() per_stream_logs",
+              "expr": "user.username:${username} verb:${verb} objectRef.resource:${objRefResource} objectRef.namespace:~\"${objRefNamespace}\" objectRef.subresource:~\"${objRefSubresource}\"| annotations.openshift.io/unready:~\"loopback=false\" | stats by (objectRef.apiVersion, objectRef.apiGroup, objectRef.resource) count() per_stream_logs",
               "queryType": "statsRange",
               "refId": "A"
             }
@@ -1858,9 +1896,9 @@
                 "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
-                "barAlignment": 0,
+                "barAlignment": 1,
                 "barWidthFactor": 0.6,
-                "drawStyle": "line",
+                "drawStyle": "bars",
                 "fillOpacity": 0,
                 "gradientMode": "none",
                 "hideFrom": {
@@ -1876,10 +1914,11 @@
                   "type": "linear"
                 },
                 "showPoints": "auto",
+                "showValues": false,
                 "spanNulls": false,
                 "stacking": {
                   "group": "A",
-                  "mode": "none"
+                  "mode": "normal"
                 },
                 "thresholdsStyle": {
                   "mode": "off"
@@ -1890,7 +1929,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": 0
                   },
                   {
                     "color": "red",
@@ -1905,7 +1945,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 140
+            "y": 85
           },
           "id": 25,
           "options": {
@@ -1921,7 +1961,7 @@
               "sort": "none"
             }
           },
-          "pluginVersion": "11.6.0",
+          "pluginVersion": "12.3.1",
           "targets": [
             {
               "datasource": {
@@ -1929,7 +1969,7 @@
                 "uid": "${ds}"
               },
               "editorMode": "code",
-              "expr": "user.username: ${username} | verb: ${verb} | objectRef.resource: ${objRefResource}| objectRef.namespace:~\"${objRefNamespace}\" | objectRef.subresource:~\"${objRefSubresource}\"| annotations.openshift.io/unready:~\"loopback=true\" | stats by (user.username) count() per_stream_logs",
+              "expr": "user.username:${username} verb:${verb} objectRef.resource:${objRefResource} objectRef.namespace:~\"${objRefNamespace}\" objectRef.subresource:~\"${objRefSubresource}\"| annotations.openshift.io/unready:~\"loopback=true\" | stats by (user.username) count() per_stream_logs",
               "queryType": "statsRange",
               "refId": "A"
             }
@@ -1944,7 +1984,7 @@
   ],
   "preload": false,
   "refresh": "",
-  "schemaVersion": 41,
+  "schemaVersion": 42,
   "tags": [],
   "templating": {
     "list": [
@@ -1956,7 +1996,7 @@
         "name": "ds",
         "options": [],
         "query": "victoriametrics-logs-datasource",
-        "refresh": 2,
+        "refresh": 1,
         "regex": "",
         "type": "datasource"
       },
@@ -2054,7 +2094,7 @@
             "value": ".*"
           }
         ],
-        "query": "^$",
+        "query": ".*",
         "type": "textbox"
       },
       {
@@ -2084,5 +2124,5 @@
   "timezone": "browser",
   "title": "Audit log",
   "uid": "beh6ojjs8clj4a",
-  "version": 41
+  "version": 51
 }
